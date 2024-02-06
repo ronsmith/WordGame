@@ -446,7 +446,7 @@
     </routine>
     <schema id="177" parent="1" name="main">
       <Current>1</Current>
-      <LastIntrospectionLocalTimestamp>2024-02-05.18:57:05</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2024-02-06.21:18:32</LastIntrospectionLocalTimestamp>
     </schema>
     <argument id="178" parent="16">
       <ArgumentDirection>R</ArgumentDirection>
@@ -1506,16 +1506,20 @@
       <DasType>DATE|0s</DasType>
       <Position>3</Position>
     </column>
-    <index id="528" parent="519" name="sqlite_autoindex_words_1">
+    <column id="528" parent="519" name="exclude">
+      <DasType>boolean|0s</DasType>
+      <DefaultExpression>false</DefaultExpression>
+      <Position>4</Position>
+    </column>
+    <index id="529" parent="519" name="sqlite_autoindex_words_1">
       <ColNames>word</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <index id="529" parent="519" name="word_len_index">
-      <ColNames>word_len</ColNames>
-    </index>
-    <index id="530" parent="519" name="last_used_index">
-      <ColNames>last_used</ColNames>
+    <index id="530" parent="519" name="word_search_index">
+      <ColNames>word_len
+last_used
+exclude</ColNames>
     </index>
     <key id="531" parent="519">
       <ColNames>word</ColNames>
