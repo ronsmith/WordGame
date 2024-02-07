@@ -8,13 +8,13 @@ try:
 
     with db:
         db.execute("""DROP TABLE IF EXISTS words""")
-        db.execute("""CREATE TABLE words (
+        db.execute("""CREATE TABLE IF NOT EXISTS words (
                         word        TEXT UNIQUE PRIMARY KEY NOT NULL,
                         word_len    INTEGER NOT NULL, 
-                        last_used   DATE
+                        last_used   DATE,
+                        exclude     BOOLEAN NOT NULL DEFAULT FALSE
                     )""")
-        db.execute("""CREATE INDEX word_len_index ON words (word_len)""")
-        db.execute("""CREATE INDEX last_used_index on words (last_used)""")
+        db.execute("""CREATE INDEX IF NOT EXISTS word_search_index on words (word_len, last_used, exclude)""")
 
     # skip to beginning of dictionary
     in_dict = False
@@ -25,27 +25,46 @@ try:
 
     # find words
     for line in wud:
+
+        # get rid of leading and trailing spaces
         line = line.strip()
+
+        # skip blanks lines
         if not line:
             continue
+
+        # found the end of the dictionary
         if line.startswith('*** END'):
             print(line)
             break
+
+        # found the word's definition
         if line.lower().startswith('defn'):
             for defn in wud:
+                # definition block ends with a blank line
                 if not defn.strip():
                     break
+
+        # words are listed in all uppercase
         elif line == line.upper():
+
+            # some entries have different spellings for the same word
             words = (word.strip() for word in line.split(';'))
+
             for w in words:
+
+                # words with letters only
                 if not valid.fullmatch(w):
                     continue
+
+                # finally save the word to the database
                 try:
                     with db:
-                        db.execute("""INSERT INTO words (word, word_len, last_used) VALUES (?, ?, NULL)""",
-                                   (w, len(w),))
+                        db.execute("""INSERT INTO words (word, word_len) VALUES (?, ?)""", (w, len(w)))
                         print(w)
+
+                # some words are duplicated in the dictionary
                 except sqlite3.IntegrityError:
-                    continue  # some words are duplicated in the dictionary
+                    continue
 finally:
     db.close()
