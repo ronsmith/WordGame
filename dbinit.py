@@ -20,7 +20,7 @@ try:
                         pw_hash     TEXT,
                         active      BOOLEAN NOT NULL DEFAULT TRUE
         )""")
-        db.execute("""CREATE INDEX IF NOT EXISTS users_search_index on users (user_id, active)""")
+        db.execute("""CREATE INDEX IF NOT EXISTS users_search_index on users (email, pw_hash, active)""")
 
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS games (
@@ -38,10 +38,9 @@ try:
                         id          INTEGER PRIMARY KEY,
                         game_id     INTEGER NOT NULL REFERENCES games (id),
                         user_id     TEXT NOT NULL REFERENCES users (id),
-                        play_date   DATE NOT NULL,
                         completed   BOOLEAN NOT NULL DEFAULT FALSE
         )""")
-        db.execute("""CREATE INDEX IF NOT EXISTS plays_search_index on plays (game_id, user_id, play_date)""")
+        db.execute("""CREATE INDEX IF NOT EXISTS plays_search_index on plays (game_id, user_id)""")
 
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS attempts (
