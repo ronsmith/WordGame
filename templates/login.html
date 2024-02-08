@@ -1,36 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="container text-center">
-        <div class="page-header mb-5">
+    <div class="container">
+        <div class="page-header mb-5 text-center">
             <h2>Wyverness Family</h2>
             <h1>Word Game</h1>
         </div>
         <h3 class="mb-4">Login</h3>
         <form method="post">
-            <div class="row m-2">
-                <div class="col-4">&nbsp;</div>
-                <div class="col-2 text-left"><label for="email">Email Address:</label></div>
-                <div class="col-1 text-left"><input type="email" name="email"></div>
-                <div class="col-5">&nbsp;</div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" class="form-control" name="email">
             </div>
-            <div class="row m-2">
-                <div class="col-4">&nbsp;</div>
-                <div class="col-2 text-left"><label for="password">Password:</label></div>
-                <div class="col-1 text-left"><input type="password" name="password"></div>
-                <div class="col-5">&nbsp;</div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" name="password">
             </div>
-            <div class="row m-3">
-                <div class="col-5">&nbsp;</div>
-                <div class="col-2 text-center"><button type="submit" class="btn btn-primary">Login</button></div>
-                <div class="col-5">&nbsp;</div>
-            </div>
-            <div class="row m-3">
-                <div class="col-4">&nbsp;</div>
-                <div class="col-2 text-center"><a href="{{ url_for('forgot_password') }}">Forgot Password</a></div>
-                <div class="col-2 text-center"><a href="{{ url_for('signup') }}">Signup</a></div>
-                <div class="col-4">&nbsp;</div>
-            </div>
+{#            <div class="mb-3 form-check">#}
+{#                <input type="checkbox" class="form-check-input" name="remember">#}
+{#                <label class="form-check-label" for="remember">Remember me</label>#}
+{#            </div>#}
+            <button type="submit" class="btn btn-primary mt-3">Login</button>
         </form>
+        <div class="text-end">
+            <a class="px-3" href="{{ url_for('forgot_password') }}">Forgot Password</a>
+            <a class="px-3" href="{{ url_for('signup') }}">Sign Up</a>
+        </div>
     </div>
 {% endblock %}
 

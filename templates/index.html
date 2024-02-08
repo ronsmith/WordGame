@@ -4,7 +4,10 @@
     <h2>Wyverness Family</h2>
     <h1>Word Game</h1>
     <p>&nbsp</p>
-    <p>Welcome <a href="{{ url_for('profile') }}">{{ user.name }}</a></p>
+    <p>
+        Welcome <a href="{{ url_for('profile') }}">{{ user.name }}</a>
+        &nbsp;<button id="logout-btn" class="btn btn-primary btn-sm">Logout</button>
+    </p>
     {% if user.last_play < game.game_date %}
         <p><button id="play_game_btn" class="btn btn-primary">Start Today's Game</button></p>
     {% elif user.last_play == game.game_date %}
@@ -20,7 +23,10 @@
 <script>
     $(document).ready(function() {
         $("#play_game_btn").click(function() {
-            location.href ="{{ url_for('game') }}";
+            location.href = "{{ url_for('game') }}";
+        });
+        $("#logout-btn").click(function() {
+           location.href =  "{{ url_for('logout') }}"
         });
     });
 </script>
