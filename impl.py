@@ -84,5 +84,9 @@ def create_user(email, name, password, confirm):
     return 'New user created. You can go log in.', 'success'
 
 
-
+def send_reset_pwd_email(email):
+    if not email:
+        return 'Email address is required.', 'error'
+    # TODO: generate a code, insert it into a reset table, send and email
+    return 'Email with reset link sent.', 'success'
 
