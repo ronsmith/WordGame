@@ -6,20 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Word Game{% endblock %}</title>
     <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='bootstrap-icons.min.css') }}" rel="stylesheet">
   </head>
   <body>
-    {% block content %}
-    {% endblock %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {%  if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category|replace('error', 'danger') }} alert-dismissible" role="alert">
-                    <button class="close" data-dismiss="alert"></button>
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div class="container">
+        <div class="page-header mb-5 text-center">
+            <h2>Wyverness Family</h2>
+            <h1>Word Game</h1>
+        </div>
+        {% block content %}
+        {% endblock %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {%  if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category|replace('error', 'danger') }} alert-dismissible" role="alert">
+                        <button class="close" data-dismiss="alert"><i class="bi bi-x-circle-fill"></i></button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
     <script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
     <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
     {% block script %}

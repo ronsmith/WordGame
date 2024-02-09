@@ -1,23 +1,19 @@
 {%  extends "base.html" %}
 {% block content %}
-<div class="text-center">
-    <h2>Wyverness Family</h2>
-    <h1>Word Game</h1>
-    <p>&nbsp</p>
-    <p>
+    <h3>
         Welcome <a href="{{ url_for('profile') }}">{{ user.name }}</a>
         &nbsp;<button id="logout-btn" class="btn btn-primary btn-sm">Logout</button>
-    </p>
+    </h3>
+    <div class="my-3">
     {% if user.last_play < game.game_date %}
         <p><button id="play_game_btn" class="btn btn-primary">Start Today's Game</button></p>
     {% elif user.last_play == game.game_date %}
         <p><button id="play_game_btn" class="btn btn-primary">Continue Today's Game</button></p>
     {% else %}
         <p>You have completed today's game</p>
-        <p>Next game starts in <div class="countdown"></div></div>
         <p><button id="play_game_btn" class="btn btn-primary">View Today's Game</button></p>
     {% endif %}
-</div>
+    </div>
 {% endblock %}
 {% block script %}
 <script>
