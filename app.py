@@ -49,10 +49,7 @@ def signup():
         session.clear()
         msg, category = create_user(
             request.form['email'], request.form['name'], request.form['password'], request.form['confirm'])
-        if not msg:
-            return redirect(url_for('index'))
-        else:
-            flash(msg, category)
+        flash(msg, category)
     return render_template('signup.html')
 
 
