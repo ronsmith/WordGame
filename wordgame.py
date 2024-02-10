@@ -34,6 +34,20 @@ def game():
     return render_template('game.html')
 
 
+@app.route('/game/state')
+def game_state():
+    return {
+        'status': 'playing',
+        'rows': [
+            {'word': 'ABOUT', 'green': ('A',), 'orange': ('O',)},
+            {'word': 'YIELD', 'green': (), 'orange': ()},
+        ],
+        'keyboard': {
+            'green': ('A',),
+            'orange': ('O',),
+        }
+    }
+
 @app.route('/profile')
 def profile():
     return render_template('profile.html')

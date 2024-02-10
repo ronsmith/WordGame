@@ -1,7 +1,7 @@
 {%  extends "base.html" %}
 {% block head %}
 <style>
-    table.game-board th {
+    table.gameboard th {
         width: 70px;
         height: 70px;
         border: 1px solid;
@@ -22,48 +22,48 @@
         <button type="button" class="bth btn-primary" id="home_btn">Home</button>
     </div>
     <div class="mb-3 text-center" id="board">
-        <table class="game-board" align="center">
+        <table class="gameboard" align="center">
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
             <tr>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
-                <th>&nbsp</th>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
+                <td>&nbsp</td>
             </tr>
         </table>
     </div>
@@ -73,57 +73,85 @@
     <div class="mb-3" id="keyboard">
         <table class="keyboard" align="center">
             <tr>
-                <th colspan="2">Q</th>
-                <th colspan="2">W</th>
-                <th colspan="2">E</th>
-                <th colspan="2">R</th>
-                <th colspan="2">T</th>
-                <th colspan="2">Y</th>
-                <th colspan="2">U</th>
-                <th colspan="2">I</th>
-                <th colspan="2">O</th>
-                <th colspan="2">P</th>
+                <td colspan="2">Q</td>
+                <td colspan="2">W</td>
+                <td colspan="2">E</td>
+                <td colspan="2">R</td>
+                <td colspan="2">T</td>
+                <td colspan="2">Y</td>
+                <td colspan="2">U</td>
+                <td colspan="2">I</td>
+                <td colspan="2">O</td>
+                <td colspan="2">P</td>
             </tr>
             <tr>
-                <th></th>
-                <th colspan="2">A</th>
-                <th colspan="2">S</th>
-                <th colspan="2">D</th>
-                <th colspan="2">F</th>
-                <th colspan="2">G</th>
-                <th colspan="2">H</th>
-                <th colspan="2">J</th>
-                <th colspan="2">K</th>
-                <th colspan="2">L</th>
-                <th></th>
+                <td></td>
+                <td colspan="2">A</td>
+                <td colspan="2">S</td>
+                <td colspan="2">D</td>
+                <td colspan="2">F</td>
+                <td colspan="2">G</td>
+                <td colspan="2">H</td>
+                <td colspan="2">J</td>
+                <td colspan="2">K</td>
+                <td colspan="2">L</td>
+                <td></td>
             </tr>
             <tr>
-                <th colspan="3">
+                <td colspan="3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backspace" viewBox="0 0 16 16">
                         <path d="M5.83 5.146a.5.5 0 0 0 0 .708L7.975 8l-2.147 2.146a.5.5 0 0 0 .707.708l2.147-2.147 2.146 2.147a.5.5 0 0 0 .707-.708L9.39 8l2.146-2.146a.5.5 0 0 0-.707-.708L8.683 7.293 6.536 5.146a.5.5 0 0 0-.707 0z"/>
                         <path d="M13.683 1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7.08a2 2 0 0 1-1.519-.698L.241 8.65a1 1 0 0 1 0-1.302L5.084 1.7A2 2 0 0 1 6.603 1zm-7.08 1a1 1 0 0 0-.76.35L1 8l4.844 5.65a1 1 0 0 0 .759.35h7.08a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
                     </svg>
-                </th>
-                <th colspan="2">Z</th>
-                <th colspan="2">X</th>
-                <th colspan="2">C</th>
-                <th colspan="2">V</th>
-                <th colspan="2">B</th>
-                <th colspan="2">N</th>
-                <th colspan="2">M</th>
-                <th colspan="3">Enter</th>
+                </td>
+                <td colspan="2">Z</td>
+                <td colspan="2">X</td>
+                <td colspan="2">C</td>
+                <td colspan="2">V</td>
+                <td colspan="2">B</td>
+                <td colspan="2">N</td>
+                <td colspan="2">M</td>
+                <td colspan="3">Enter</td>
             </tr>
         </table>
     </div>
 {% endblock %}
 {% block script %}
 <script>
+    function paint_gameboard(rows) {
+       $.each(rows, function(r, row) {
+           let tr = $("table.gameboard tr:nth-child(" + (r+1) + ")");
+           $.each(row.word.split(''), function(i, letter) {
+               let td = tr.find("td:nth-child(" + (i+1) + ")");
+               td.html(letter)
+               if ($.inArray(letter, row.green)) {
+                   td.css('background-color', 'green')
+               } else if ($.inArray(letter, row.orange)) {
+                   td.css('background-color', 'green')
+               } else {
+                   td.css('background-color', 'black')
+               }
+           });
+       });
+    }
+
+    function paint_keyboard(keyboard) {
+
+    }
+
     $(document).ready(function() {
+        // get the initial state of the game
+        $.getJSON("{{ url_for('game_state') }}", function(data) {
+            paint_gameboard(data.rows);
+            paint_keyboard(data.keyboard);
+        });
+
         $("table.keyboard th").click(function() {
             let orig_bg_color = $(this).css("background-color");
             $(this).css("background-color", "LightGrey");
             setTimeout(() => {$(this).css("background-color", orig_bg_color); }, 100);
         });
+
         $("#home_btn").click(function() {
            location.href =  "{{ url_for('index') }}"
         });
