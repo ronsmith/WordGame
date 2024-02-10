@@ -1,9 +1,11 @@
 import os
 from flask import Flask, request, render_template, flash, session, redirect, abort, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 from impl import *
 
 app = Flask('WordGame')
 app.config['SECRET_KEY'] = 't(X9Day:V{nygE8+3Q36(9h#<)u7=i]U,X/?Xrd`)pt+BHR&x+d/HX9<k.l=rbS'
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 
 @app.after_request
