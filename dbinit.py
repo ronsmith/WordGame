@@ -1,6 +1,7 @@
 import sqlite3
+from config import DB_FILENAME
 
-db = sqlite3.connect('wordgame.db')
+db = sqlite3.connect(DB_FILENAME)
 try:
 
     with db:
@@ -46,10 +47,20 @@ try:
         db.execute("""CREATE TABLE IF NOT EXISTS attempts (
                         id          INTEGER PRIMARY KEY,
                         play_id     INTEGER NOT NULL REFERENCES plays (id),
-                        timestamp   DATETIME NULL,
+                        word        TEXT NOT NULL,
+                        timestamp   DATETIME NOT NULL,
                         success     BOOLEAN NOT NULL
         )""")
         db.execute("""CREATE INDEX IF NOT EXISTS attempts_search_index on attempts (play_id, timestamp, success)""")
+
+    with db:
+        db.execute("""CREATE TABLE IF NOT EXISTS pwresets (
+                        id          INTEGER PRIMARY KEY,
+                        user_id     INTEGER NOT NULL REFERENCES users (id),
+                        reset_code  TEXT NOT NULL,
+                        expire_time DATETIME NOT NULL
+        )""")
+        db.execute("""CREATE INDEX IF NOT EXISTS pwresets_search_index on pwresets (reset_code)""")
 
 finally:
     db.close()

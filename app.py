@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, flash, session, url_for, redirect
+import os
+from flask import Flask, request, render_template, flash, session, redirect, abort, send_from_directory
 from impl import *
 
 app = Flask('WordGame')
@@ -12,6 +13,12 @@ def after_request(resp):
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'
     return resp
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')
+
 
 @app.route('/')
 def index():
@@ -30,16 +37,16 @@ def profile():
     return render_template('profile.html')
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         session.clear()
-        user = get_authenticated_user(request.form['email'], request.form['password'])
+        user = get_authenticated_user(request.form.get('email'), request.form.get('password'))
         if user:
             session['user'] = user
             return redirect(url_for(request.args.get('next', 'index')))
         else:
-            flash('Invalid login.', 'warning')
+            flash('Invalid login.', WARN)
     return render_template('login.html')
 
 
@@ -47,8 +54,8 @@ def login():
 def signup():
     if request.method == 'POST':
         session.clear()
-        msg, cat = create_user(
-            request.form['email'], request.form['name'], request.form['password'], request.form['confirm'])
+        msg, cat = create_user(request.form.get('email'), request.form.get('name'),
+                               request.form.get('password'), request.form.get('confirm'))
         flash(msg, cat)
     return render_template('signup.html')
 
@@ -56,14 +63,14 @@ def signup():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logout successful.', 'success')
+    flash('Logout successful.', SUCCESS)
     return redirect(url_for('index'))
 
 
 @app.route('/forgotpwd', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        msg, cat = send_reset_pwd_email(request.form['email'])
+        msg, cat = send_reset_pwd_email(request.form.get('email'))
         flash(msg, cat)
     return render_template('forgotpwd.html')
 
@@ -73,6 +80,22 @@ def change_password():
     if request.method == 'POST':
         pass  # TODO
     return render_template('changepwd.html')
+
+
+@app.route('/resetpwd', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        reset_code = request.form.get('resetcode')
+        msg, cat = do_password_reset(request.form.get('email'), request.form.get('password'), 
+                                     request.form.get('confirm'), reset_code)
+        flash(msg, cat)
+        if cat in (SUCCESS, ERROR):
+            return redirect(url_for('index'))
+    else:
+        reset_code = request.args.get('resetcode')
+    if not reset_code:
+        abort(400)
+    return render_template('resetpwd.html', reset_code=reset_code)
 
 
 if __name__ == '__main__':
