@@ -34,24 +34,25 @@ try:
         db.execute("""CREATE INDEX IF NOT EXISTS games_word_search_index on games (word, rejected)""")
         db.execute("""CREATE INDEX IF NOT EXISTS games_date_search_index on games (game_date, rejected)""")
 
-    with db:
-        db.execute("""CREATE TABLE IF NOT EXISTS plays (
-                        id          INTEGER PRIMARY KEY,
-                        game_id     INTEGER NOT NULL REFERENCES games (id),
-                        user_id     TEXT NOT NULL REFERENCES users (id),
-                        completed   BOOLEAN NOT NULL DEFAULT FALSE
-        )""")
-        db.execute("""CREATE INDEX IF NOT EXISTS plays_search_index on plays (game_id, user_id)""")
+    # with db:
+    #     db.execute("""CREATE TABLE IF NOT EXISTS plays (
+    #                     id          INTEGER PRIMARY KEY,
+    #                     game_id     INTEGER NOT NULL REFERENCES games (id),
+    #                     user_id     TEXT NOT NULL REFERENCES users (id),
+    #                     completed   BOOLEAN NOT NULL DEFAULT FALSE
+    #     )""")
+    #     db.execute("""CREATE INDEX IF NOT EXISTS plays_search_index on plays (game_id, user_id)""")
 
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS attempts (
                         id          INTEGER PRIMARY KEY,
-                        play_id     INTEGER NOT NULL REFERENCES plays (id),
+                        user_id     INTEGER NOT NULL REFERENCES users (id),
+                        game_id     INTEGER NOT NULL REFERENCES games (id),
                         word        TEXT NOT NULL,
                         timestamp   DATETIME NOT NULL,
                         success     BOOLEAN NOT NULL
         )""")
-        db.execute("""CREATE INDEX IF NOT EXISTS attempts_search_index on attempts (play_id, timestamp, success)""")
+        db.execute("""CREATE INDEX IF NOT EXISTS attempts_search_index on attempts (user_id, game_id, timestamp, success)""")
 
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS pwresets (

@@ -31,32 +31,39 @@ def index():
 
 @app.route('/game')
 def game():
+    if 'user' not in session:
+        return redirect(url_for('login', next='index'))
     return render_template('game.html')
 
 
 @app.route('/game/state')
 def game_state():
-    return {
-        'status': 'playing',
-        'rows': [
-            {'word': 'ABOUT', 'green': ('A',), 'orange': ('O',)},
-            {'word': 'YIELD', 'green': (), 'orange': ()},
-        ],
-        'keyboard': {
-            'green': ('A',),
-            'orange': ('O',),
-        }
-    }
+    if 'user' not in session:
+        abort(401)
+    return generate_game_state(session['user'])
+
+
+@app.route('/game/submit')
+def submit_word():
+    if 'user' not in session:
+        abort(401)
+    word = request.args.get('word')
+    if not word:
+        abort(400)
+    return do_submit_word(session['user'], word)
+
 
 @app.route('/profile')
 def profile():
+    if 'user' not in session:
+        return redirect(url_for('login', next='index'))
     return render_template('profile.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    session.clear()
     if request.method == 'POST':
-        session.clear()
         user = get_authenticated_user(request.form.get('email'), request.form.get('password'))
         if user:
             session['user'] = user
@@ -68,8 +75,8 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    session.clear()
     if request.method == 'POST':
-        session.clear()
         msg, cat = create_user(request.form.get('email'), request.form.get('name'),
                                request.form.get('password'), request.form.get('confirm'))
         flash(msg, cat)
@@ -85,6 +92,7 @@ def logout():
 
 @app.route('/forgotpwd', methods=['GET', 'POST'])
 def forgot_password():
+    session.clear()
     if request.method == 'POST':
         msg, cat = send_reset_pwd_email(request.form.get('email'))
         flash(msg, cat)
@@ -100,6 +108,7 @@ def change_password():
 
 @app.route('/resetpwd', methods=['GET', 'POST'])
 def reset_password():
+    session.clear()
     if request.method == 'POST':
         reset_code = request.form.get('resetcode')
         msg, cat = do_password_reset(request.form.get('email'), request.form.get('password'), 

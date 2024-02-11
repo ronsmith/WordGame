@@ -22,11 +22,11 @@ def synchronized(wrapped):
 
 
 @synchronized
-def get_current_game():
+def get_current_game(include_word=False):
     """gets the current game or creates a new one if a game for today doesn't exist"""
     db = sqlite3.connect(DB_FILENAME)
     try:
-        cur = db.execute("""SELECT id, game_date FROM games WHERE game_date == date('now')""")
+        cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now')""")
         row = cur.fetchone()
         if not row:
             cur = db.execute("""SELECT word FROM words
@@ -40,10 +40,13 @@ def get_current_game():
             with db:
                 db.execute("""INSERT INTO games (word, game_date) VALUES (?, date('now'))""", (word,))
                 db.execute("""UPDATE words SET last_used = date('now') WHERE word = ?""", (word,))
-            cur = db.execute("""SELECT id, game_date FROM games WHERE game_date == date('now')""")
+            cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now')""")
             row = cur.fetchone()
 
-        return {'id': row[0], 'game_date': row[1]}
+        data = {'id': row[0], 'game_date': row[1]}
+        if include_word:
+            data['word'] = row[2]
+        return data
     finally:
         db.close()
 
@@ -53,11 +56,11 @@ def get_authenticated_user(email, password):
     try:
         cur = db.execute("""
             SELECT users.id, users.email, users.name, games.game_date as last_play, users.pw_hash
-                FROM users, games, plays
+                FROM users, games, attempts
                 WHERE users.email = ?
                   AND users.active = TRUE
-                  AND plays.user_id = users.id
-                  AND plays.game_id = games.id
+                  AND attempts.user_id = users.id
+                  AND attempts.game_id = games.id
                 ORDER BY games.game_date DESC
                 LIMIT 1""", (email,))
         row = cur.fetchone()
@@ -148,3 +151,71 @@ def do_password_reset(email, password, confirm, reset_code):
     finally:
         db.close()
     return 'Password successfully reset.', SUCCESS
+
+
+def do_submit_word(user, word):
+    game = get_current_game(include_word=True)
+    db = sqlite3.connect(DB_FILENAME)
+    try:
+        # TODO: make sure word is a real word
+        with db:
+            db.execute("""INSERT INTO attempts (user_id, game_id, word, timestamp, success)
+                            VALUES (?, ?, ?, datetime('now'), ?)""",
+                       (user['id'], game['id'], word, (word == game['word'])))
+        return generate_game_state(user)
+    finally:
+        db.close()
+
+
+def generate_game_state(user):
+    game = get_current_game(include_word=True)
+    db = sqlite3.connect(DB_FILENAME)
+    try:
+        cur = db.execute("""SELECT word, success FROM attempts 
+                            WHERE user_id = ? AND game_id = ? 
+                            ORDER BY timestamp ASC""",
+                         (user['id'], game['id']))
+        status = 'playing'
+        rows = []
+        kb_green = set()
+        kb_orange = set()
+        kb_black = set()
+        for word, success in cur:
+            if success:
+                status = 'win'
+            row = {'word': word, 'colors': []}
+            for i, letter in enumerate(word):
+                if game['word'][i] == letter:
+                    row['colors'].append('green')
+                    kb_green.add(letter)
+                    if letter in kb_orange:
+                        kb_orange.remove(letter)
+                    if letter in kb_black:
+                        kb_black.remove(letter)
+                elif letter in game['word']:
+                    row['colors'].append('orange')
+                    if letter not in kb_green:
+                        kb_orange.add(letter)
+                else:
+                    row['colors'].append('black')
+                    if letter not in kb_green and letter not in kb_orange:
+                        kb_black.add(letter)
+            rows.append(row)
+
+        if len(rows) >= 6 and status == 'playing':
+            status = 'loss'
+
+        data = {
+            'status': status,
+            'rows': rows,
+            'keyboard': {
+                'green': list(kb_green),
+                'orange': list(kb_orange),
+                'black': list(kb_black)
+            }
+        }
+        if status != 'playing':
+            data['word_was'] = game['word']
+        return data
+    finally:
+        db.close()

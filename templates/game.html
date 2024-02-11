@@ -20,10 +20,8 @@
 </style>
 {% endblock %}
 {% block content %}
-    <div class="mb-3">
-        <button type="button" class="bth btn-primary" id="home_btn">Home</button>
-    </div>
     <div class="mb-3 text-center" id="board">
+        <p class="mb-3"><button type="button" class="bth btn-primary" id="home_btn">Home</button></p>
         <table class="gameboard" align="center">
             <tr>
                 <td>&nbsp</td>
@@ -69,9 +67,7 @@
             </tr>
         </table>
     </div>
-    <div class="mb-3" id="msgarea">
-        &nbsp;
-    </div>
+    <div class="mb-3 text-center" id="msgarea">&nbsp;</div>
     <div class="mb-3" id="keyboard">
         <table class="keyboard" align="center">
             <tr>
@@ -120,42 +116,97 @@
 {% endblock %}
 {% block script %}
 <script>
+    var input_row = 0;
+    var input_col = 0;
+    var game_status = null;
+
+    function display_game(data) {
+            game_status = data.status;
+            input_row = data.rows.length + 1;
+            input_col = 1;
+            paint_gameboard(data.rows);
+            paint_keyboard(data.keyboard);
+            if (game_status != 'playing') {
+                let msg = (game_status == 'win' ? 'Great Job!' : 'Better luck next time.')
+                $("#msgarea").html(msg + '<br>The word was <a href="https://www.dictionary.com/browse/' +
+                    data.word_was + '" target="_blank">' + data.word_was + '</a></p>');
+            }
+        }
+
     function paint_gameboard(rows) {
-       $.each(rows, function(r, row) {
-           let tr = $("table.gameboard tr:nth-child(" + (r+1) + ")");
-           $.each(row.word.split(''), function(i, letter) {
-               let td = tr.find("td:nth-child(" + (i+1) + ")");
-               td.text(letter)
-               if ($.inArray(letter, row.green) > -1) {
-                   td.css('background-color', 'green')
-               } else if ($.inArray(letter, row.orange) > -1) {
-                   td.css('background-color', 'orange')
-               } else {
-                   td.css('background-color', 'black')
-               }
-           });
-       });
+        $.each(rows, function (r, row) {
+            let tr = $("table.gameboard tr:nth-child(" + (r + 1) + ")");
+            $.each(row.word.split(''), function (i, letter) {
+                let td = tr.find("td:nth-child(" + (i + 1) + ")");
+                td.text(letter)
+                td.css('background-color', row.colors[i])
+            });
+        });
+
+
     }
 
     function paint_keyboard(keyboard) {
-
+        $("table.keyboard td").each(function (index) {
+            let letter = $(this).text();
+            if ($.inArray(letter, keyboard.green) > -1) {
+                $(this).css('background-color', 'green');
+            } else if ($.inArray(letter, keyboard.orange) > -1) {
+                $(this).css('background-color', 'orange');
+            } else if ($.inArray(letter, keyboard.black) > -1) {
+                $(this).css('background-color', 'black');
+            } else {
+                $(this).css('background-color', '#2b2f32');
+            }
+        });
     }
 
-    $(document).ready(function() {
+    function set_input_cell(letter) {
+        if (input_row > 6 || input_row < 1 || input_col > 5 || input_col < 1)
+            return;  // input out of bounds
+        $("table.gameboard tr:nth-child(" + input_row + ") td:nth-child(" + input_col + ")").text(letter);
+    }
+
+    $(document).ready(function () {
         // get the initial state of the game
-        $.getJSON("{{ url_for('game_state') }}", function(data) {
-            paint_gameboard(data.rows);
-            paint_keyboard(data.keyboard);
+        $.getJSON("{{ url_for('game_state') }}", display_game);
+
+        $("table.keyboard td").click(function () {
+            if (game_status != 'playing')
+                return; // ignore input when game is over
+
+            let key = $(this).text();
+
+            if (key != '') {  // ignore the end cells on the middle row
+                let orig_bg_color = $(this).css("background-color");
+                $(this).css("background-color", "LightGrey");
+                setTimeout(() => {
+                    $(this).css("background-color", orig_bg_color);
+                }, 100);
+                if (key.startsWith('\n') && input_col > 1) {  // backspace
+                    input_col--;
+                    set_input_cell(' ');
+                    $("#msgarea").html('&nbsp;');
+                } else if (key == 'Enter') {
+                    if (input_col < 6) {
+                        $("#msgarea").text('All words are 5 letters');
+                    } else {
+                        let word = '';
+                        $("table.gameboard tr:nth-child(" + input_row + ") td").each(function (index) {
+                            word += $(this).text();
+                        });
+                        $.getJSON("{{ url_for('submit_word') }}?word=" + word, display_game);
+                    }
+                } else if (input_col < 6) {  // must be a letter
+                    set_input_cell(key);
+                    input_col++;
+                    $("#msgarea").html('&nbsp;');
+                }
+            }
         });
 
-        $("table.keyboard th").click(function() {
-            let orig_bg_color = $(this).css("background-color");
-            $(this).css("background-color", "LightGrey");
-            setTimeout(() => {$(this).css("background-color", orig_bg_color); }, 100);
-        });
-
-        $("#home_btn").click(function() {
-           location.href =  "{{ url_for('index') }}"
+        $("#home_btn").click(function () {
+            location.href = "{{ url_for('index') }}"
         });
     });
 </script>
