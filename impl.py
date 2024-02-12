@@ -51,10 +51,34 @@ def get_current_game(include_word=False):
             cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', ?)""", (east_adj,))
             row = cur.fetchone()
 
-        data = {'id': row[0], 'game_date': row[1]}
+        data = {'id': row[0], 'date': row[1]}
         if include_word:
             data['word'] = row[2]
         return data
+    finally:
+        db.close()
+
+
+def get_last_play_data(user):
+    db = sqlite3.connect(DB_FILENAME)
+    try:
+        cur = db.execute("""SELECT game_date, count(*) "attempts", max(success) "win"
+                                FROM games, attempts
+                                WHERE games.id = attempts.game_id
+                                  AND attempts.user_id = 1
+                                GROUP BY game_date
+                                ORDER BY game_date desc
+                                LIMIT 1""")
+        game_date, attempts, win = cur.fetchone()
+        if win:
+            status = 'win'
+        elif attempts >= 6:
+            status = 'loss'
+        elif game_date < datetime.now(tz=ZoneInfo('US/Eastern')):
+            status = 'incomplete'
+        else:
+            status = 'playing'
+        return {'date': game_date, 'status': status}
     finally:
         db.close()
 
@@ -159,30 +183,6 @@ def do_password_reset(email, password, confirm, reset_code):
     finally:
         db.close()
     return 'Password successfully reset.', SUCCESS
-
-
-def get_last_play_data(user):
-    db = sqlite3.connect(DB_FILENAME)
-    try:
-        cur = db.execute("""SELECT game_date, count(*) "attempts", max(success) "win"
-                                FROM games, attempts
-                                WHERE games.id = attempts.game_id
-                                  AND attempts.user_id = 1
-                                GROUP BY game_date
-                                ORDER BY game_date desc
-                                LIMIT 1""")
-        game_date, attempts, win = cur.fetchone()
-        if win:
-            status = 'win'
-        elif attempts >= 6:
-            status = 'loss'
-        elif game_date < datetime.now(tz=ZoneInfo('US/Eastern')):
-            status = 'over'
-        else:
-            status = 'playing'
-        return {'game_day': game_date, 'status': status}
-    finally:
-        db.close()
 
 
 def do_submit_word(user, word):

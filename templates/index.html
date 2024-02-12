@@ -5,10 +5,10 @@
         &nbsp;<button id="logout-btn" class="btn btn-primary btn-sm">Logout</button>
     </h3>
     <div class="my-5 text-center">
-    {% if user.last_play < game.game_date %}
+    {% if last_play.date < current_game.date %}
         <p><button id="play_game_btn" class="btn btn-primary">Start Today's Game</button></p>
-    {% elif user.last_play == game.game_date %}
-        <p><button id="play_game_btn" class="btn btn-primary">Continue Today's Game</button></p>
+    {% elif last_play.status == 'playing' %}
+        <p><button id="play_game_btn" class="btn btn-primary">Continue Today's Game</button></p>%}
     {% else %}
         <p>You have completed today's game</p>
         <p><button id="play_game_btn" class="btn btn-primary">View Today's Game</button></p>

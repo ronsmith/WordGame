@@ -28,8 +28,8 @@ def index():
         return redirect(url_for('login', next='index'))
     return render_template('index.html', **{
         'user': session['user'],
-        'play': get_play_data(session['user']),
-        'game': get_current_game()})
+        'last_play': get_last_play_data(session['user']),
+        'current_game': get_current_game()})
 
 
 @app.route('/game')
