@@ -26,21 +26,21 @@ def get_current_game(include_word=False):
     """gets the current game or creates a new one if a game for today doesn't exist"""
     db = sqlite3.connect(DB_FILENAME)
     try:
-        cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now')""")
+        cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', 'localtime')""")
         row = cur.fetchone()
         if not row:
             cur = db.execute("""SELECT word FROM words
                 WHERE word_len = 5
-                  AND (last_used IS NULL OR last_used < date('now', '-1 years'))
+                  AND (last_used IS NULL OR last_used < date('now', 'localtime', '-1 years'))
                 ORDER BY random()
                 LIMIT 1
                 """)
             row = cur.fetchone()
             word = row[0]
             with db:
-                db.execute("""INSERT INTO games (word, game_date) VALUES (?, date('now'))""", (word,))
-                db.execute("""UPDATE words SET last_used = date('now') WHERE word = ?""", (word,))
-            cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now')""")
+                db.execute("""INSERT INTO games (word, game_date) VALUES (?, date('now', 'localtime'))""", (word,))
+                db.execute("""UPDATE words SET last_used = date('now', 'localtime') WHERE word = ?""", (word,))
+            cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', 'localtime')""")
             row = cur.fetchone()
 
         data = {'id': row[0], 'game_date': row[1]}
@@ -104,7 +104,7 @@ def send_reset_pwd_email(email):
             reset_code = uuid1().hex
             with db:
                 db.execute(f"""INSERT INTO pwresets (user_id, reset_code, expire_time) 
-                                VALUES (?, ?, datetime('now', '{PW_RESET_EXPIRE_TIME}'))""",
+                                VALUES (?, ?, datetime('now', 'localtime', '{PW_RESET_EXPIRE_TIME}'))""",
                            (row[0], reset_code))
                 msg = 'Subject: Word Game Password Reset\n\n' + \
                       'Use the link below to reset your password\n' + \
@@ -132,7 +132,7 @@ def do_password_reset(email, password, confirm, reset_code):
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
-            db.execute("""DELETE FROM pwresets WHERE datetime('now') > expire_time""")
+            db.execute("""DELETE FROM pwresets WHERE datetime('now', 'localtime') > expire_time""")
         cur = db.execute("""SELECT user_id, email FROM pwresets, users 
                             WHERE pwresets.reset_code = ? 
                               AND pwresets.user_id = users.id""",
@@ -157,10 +157,12 @@ def do_submit_word(user, word):
     game = get_current_game(include_word=True)
     db = sqlite3.connect(DB_FILENAME)
     try:
-        # TODO: make sure word is a real word
+        cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (word,))
+        if not cur.fetchone()[0]:
+            return {'status': 'error', 'message': 'Unknown word. Try another.'}
         with db:
             db.execute("""INSERT INTO attempts (user_id, game_id, word, timestamp, success)
-                            VALUES (?, ?, ?, datetime('now'), ?)""",
+                            VALUES (?, ?, ?, datetime('now', 'localtime'), ?)""",
                        (user['id'], game['id'], word, (word == game['word'])))
         return generate_game_state(user)
     finally:

@@ -121,6 +121,9 @@
     var game_status = null;
 
     function display_game(data) {
+        if (data.status == 'error') {
+            $("#msgarea").text(data.message);
+        } else {
             game_status = data.status;
             input_row = data.rows.length + 1;
             input_col = 1;
@@ -132,6 +135,7 @@
                     data.word_was + '" target="_blank">' + data.word_was + '</a></p>');
             }
         }
+    }
 
     function paint_gameboard(rows) {
         $.each(rows, function (r, row) {
