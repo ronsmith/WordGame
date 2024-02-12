@@ -65,20 +65,22 @@ def get_last_play_data(user):
         cur = db.execute("""SELECT game_date, count(*) "attempts", max(success) "win"
                                 FROM games, attempts
                                 WHERE games.id = attempts.game_id
-                                  AND attempts.user_id = 1
+                                  AND attempts.user_id = ?
                                 GROUP BY game_date
                                 ORDER BY game_date desc
-                                LIMIT 1""")
-        game_date, attempts, win = cur.fetchone()
-        if win:
+                                LIMIT 1""", (user['id'],))
+        row = cur.fetchone()
+        if not row:
+            return None
+        elif row[2]:
             status = 'win'
-        elif attempts >= 6:
+        elif row[1] >= 6:
             status = 'loss'
-        elif game_date < datetime.now(tz=ZoneInfo('US/Eastern')):
+        elif datetime.strptime(row[0], '%Y-%m-%d').date() < datetime.now(tz=ZoneInfo('US/Eastern')).date():
             status = 'incomplete'
         else:
             status = 'playing'
-        return {'date': game_date, 'status': status}
+        return {'date': row[0], 'status': status}
     finally:
         db.close()
 
@@ -86,18 +88,11 @@ def get_last_play_data(user):
 def get_authenticated_user(email, password):
     db = sqlite3.connect(DB_FILENAME)
     try:
-        cur = db.execute("""
-            SELECT users.id, users.email, users.name, games.game_date as last_play, users.pw_hash
-                FROM users, games, attempts
-                WHERE users.email = ?
-                  AND users.active = TRUE
-                  AND attempts.user_id = users.id
-                  AND attempts.game_id = games.id
-                ORDER BY games.game_date DESC
-                LIMIT 1""", (email,))
+        cur = db.execute("""SELECT users.id, users.email, users.name, users.pw_hash FROM users 
+                            WHERE users.email = ? AND users.active = TRUE""", (email,))
         row = cur.fetchone()
-        if row and check_password_hash(row[4], password):
-            return {'id': row[0], 'email': row[1], 'name': row[2], 'last_play': row[3]}
+        if row and check_password_hash(row[3], password):
+            return {'id': row[0], 'email': row[1], 'name': row[2]}
         else:
             return None
     finally:
@@ -116,8 +111,9 @@ def create_user(email, name, password, confirm):
         return 'Email address is invalid', WARN
     db = sqlite3.connect(DB_FILENAME)
     try:
-        db.execute("""INSERT INTO users (email, name, pw_hash) VALUES (?, ?, ?)""",
-                   (email, name, generate_password_hash(password)))
+        with db:
+            db.execute("""INSERT INTO users (email, name, pw_hash) VALUES (?, ?, ?)""",
+                       (email, name, generate_password_hash(password)))
     except sqlite3.IntegrityError:
         return 'Email already exists. Try Log In or Forgot Password.', WARN
     finally:
