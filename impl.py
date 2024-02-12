@@ -3,12 +3,12 @@ import threading
 import functools
 import re
 import smtplib
-import pytz
 from uuid import uuid1
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
 from config import *
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def synchronized(wrapped):
@@ -24,7 +24,7 @@ def synchronized(wrapped):
 
 
 def get_eastern_adjustment():
-    offset = int((24 - (pytz.timezone('US/Eastern').utcoffset(datetime.now()).seconds / 3600)) * -1)
+    offset = int((24 - (datetime.now(tz=ZoneInfo('US/Eastern')).utcoffset().seconds / 3600)) * -1)
     return f'{offset} hours'
 
 
@@ -176,13 +176,14 @@ def get_last_play_data(user):
             status = 'win'
         elif attempts >= 6:
             status = 'loss'
+        elif game_date < datetime.now(tz=ZoneInfo('US/Eastern')):
+            status = 'over'
         else:
-            status = 'playing'  # TODO fix me
+            status = 'playing'
         return {'game_day': game_date, 'status': status}
-
-
     finally:
         db.close()
+
 
 def do_submit_word(user, word):
     game = get_current_game(include_word=True)
@@ -194,7 +195,7 @@ def do_submit_word(user, word):
         with db:
             db.execute("""INSERT INTO attempts (user_id, game_id, word, timestamp, success)
                             VALUES (?, ?, ?, datetime('now', ?), ?)""",
-                       (user['id'], game['id'], word, get_eastern_adjustment, (word == game['word'])))
+                       (user['id'], game['id'], word, get_eastern_adjustment(), (word == game['word'])))
         return generate_game_state(user)
     finally:
         db.close()
