@@ -26,7 +26,10 @@ def favicon():
 def index():
     if 'user' not in session:
         return redirect(url_for('login', next='index'))
-    return render_template('index.html', **{'user': session['user'], 'game': get_current_game()})
+    return render_template('index.html', **{
+        'user': session['user'],
+        'play': get_play_data(session['user']),
+        'game': get_current_game()})
 
 
 @app.route('/game')
