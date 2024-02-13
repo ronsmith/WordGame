@@ -114,6 +114,7 @@ def create_user(email, name, password, confirm):
         with db:
             db.execute("""INSERT INTO users (email, name, pw_hash) VALUES (?, ?, ?)""",
                        (email, name, generate_password_hash(password)))
+        # TODO verify email before activating user
     except sqlite3.IntegrityError:
         return 'Email already exists. Try Log In or Forgot Password.', WARN
     finally:
@@ -137,7 +138,7 @@ def send_reset_pwd_email(email):
                 msg = 'Subject: Word Game Password Reset\n\n' + \
                       'Use the link below to reset your password\n' + \
                       url_for('reset_password', resetcode=reset_code, _external=True)
-                # TODO: use HTML for message
+                # TODO: use real email server
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
                     if SMTP_USE_TLS:
                         pass  # TODO: support TLS
