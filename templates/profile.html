@@ -1,28 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
     <h3 class="mb-4">Profile</h3>
-    <form method="post">
-        <div class="mb-3">
-            <label for="email" class="form-label">Email address</label>
-            <input type="email" class="form-control" name="email">
-        </div>
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" name="name">
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" name="password">
-        </div>
-        <div class="mb-3">
-            <label for="confirm" class="form-label">Confirm Password</label>
-            <input type="password" class="form-control" name="confirm">
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Sign Up</button>
-    </form>
-    <div class="text-end">
-        <a class="px-3" href="{{ url_for('forgot_password') }}">Forgot Password</a>
-        <a class="px-3" href="{{ url_for('login') }}">Log In</a>
-    </div>
+    <p>Coming soon</p>
+    <p class="mb-3"><button type="button" class="btn btn-primary" id="home_btn">Home</button></p>
+{#    <form method="post">#}
+{#        <div class="mb-3">#}
+{#            <label for="email" class="form-label">Email address</label>#}
+{#            <input type="email" class="form-control" name="email">#}
+{#        </div>#}
+{#        <div class="mb-3">#}
+{#            <label for="name" class="form-label">Name</label>#}
+{#            <input type="text" class="form-control" name="name">#}
+{#        </div>#}
+{#        <div class="mb-3">#}
+{#            <label for="password" class="form-label">Password</label>#}
+{#            <input type="password" class="form-control" name="password">#}
+{#        </div>#}
+{#        <div class="mb-3">#}
+{#            <label for="confirm" class="form-label">Confirm Password</label>#}
+{#            <input type="password" class="form-control" name="confirm">#}
+{#        </div>#}
+{#        <button type="submit" class="btn btn-primary mt-3">Sign Up</button>#}
+{#    </form>#}
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $("#home_btn").click(function () {
+            location.href = "{{ url_for('index') }}"
+        });
+    });
+</script>
 {% endblock %}
 
