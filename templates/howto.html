@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+    <h3 class="mb-4 text-center">How To Play</h3>
+    <p class="mb-3 text-center"><a href="{{ url_for(back) }}" class="btn btn-primary mx-3" id="back_btn">Back</a></p>
+    <p class="text-center">
+        <table cellpadding="10">
+            <tr>
+                <td colspan="2">
+                    Each day at midnight Eastern Time, a 5-letter word is selected at random from the dictionary.
+                    You have until the next midnight to guess the word. Use the on-screen keyboard provided to enter
+                    letters. You get six tries. The game will provide hints after each guess as follows:
+                </td>
+            </tr>
+            <tr>
+                <td><img src="{{ url_for('static', filename='example_grey.png') }}"></td>
+                <td>Grey background means the letter hasn't been tried yet.</td>
+            </tr>
+            <tr>
+                <td><img src="{{ url_for('static', filename='example_black.png') }}"></td>
+                <td>Black background means the letter is not in the word.</td>
+            </tr>
+            <tr>
+                <td><img src="{{ url_for('static', filename='example_orange.png') }}"></td>
+                <td>Orange background means the letter is in the word but in the wrong place.</td>
+            </tr>
+            <tr>
+                <td><img src="{{ url_for('static', filename='example_green.png') }}"></td>
+                <td>Green background means the letter is in the word and in the right place.</td>
+            </tr>
+        </table>
+    </p>
+{% endblock %}
