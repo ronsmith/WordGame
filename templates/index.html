@@ -2,28 +2,16 @@
 {% block content %}
     <h3 class="text-center my-5">
         Welcome <a href="{{ url_for('profile') }}">{{ user.name }}</a>
-        &nbsp;<button id="logout-btn" class="btn btn-primary btn-sm">Logout</button>
+        <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Log Out</a>
     </h3>
     <div class="my-5 text-center">
     {% if not last_play or last_play.date < current_game.date %}
-        <p><button id="play_game_btn" class="btn btn-primary">Start Today's Game</button></p>
+        <p><a href="{{ url_for('game') }}" class="btn btn-primary">Start Today's Game</a></p>
     {% elif last_play.status == 'playing' %}
-        <p><button id="play_game_btn" class="btn btn-primary">Continue Today's Game</button></p>
+        <p><a href="{{ url_for('game') }}" class="btn btn-primary">Continue Today's Game</a></p>
     {% else %}
         <p>You have completed today's game</p>
-        <p><button id="play_game_btn" class="btn btn-primary">View Today's Game</button></p>
+        <p><a href="{{ url_for('game') }}" class="btn btn-primary">View Today's Game</a></p>
     {% endif %}
     </div>
-{% endblock %}
-{% block script %}
-<script>
-    $(document).ready(function() {
-        $("#play_game_btn").click(function() {
-            location.href = "{{ url_for('game') }}";
-        });
-        $("#logout-btn").click(function() {
-           location.href =  "{{ url_for('logout') }}"
-        });
-    });
-</script>
 {% endblock %}

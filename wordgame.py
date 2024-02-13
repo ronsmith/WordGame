@@ -39,6 +39,12 @@ def game():
     return render_template('game.html')
 
 
+@app.route('/howto')
+def howto():
+    back = request.args.get('back', 'index')
+    return render_template('howto.html', **{'back': back})
+
+
 @app.route('/game/state')
 def game_state():
     if 'user' not in session:

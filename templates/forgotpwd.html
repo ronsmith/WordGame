@@ -7,16 +7,6 @@
             <input type="email" class="form-control" name="email">
         </div>
         <button type="submit" class="btn btn-primary mt-3">Send Reset Email</button>
-        <button type="button" id="cancel_btn" class="btn btn-primary mt-3">Cancel</button>
+        <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Cancel</a>
     </form>
 {% endblock %}
-{% block script %}
-<script>
-    $(document).ready(function() {
-        $("#cancel_btn").click(function() {
-            location.href = "{{ url_for('index') }}";
-        });
-    });
-</script>
-{% endblock %}
-
