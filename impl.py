@@ -7,6 +7,7 @@ from uuid import uuid1
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
 from config import *
+from flash_categories import FlashCategories
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -104,11 +105,11 @@ EMAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
 
 def create_user(email, name, password, confirm):
     if not (email and name and password and confirm):
-        return 'All fields are required.', WARN
+        return 'All fields are required.', FlashCategories.WARN
     if password != confirm:
-        return 'Passwords must match', WARN
+        return 'Passwords must match', FlashCategories.WARN
     if not re.fullmatch(EMAIL_REGEX, email):
-        return 'Email address is invalid', WARN
+        return 'Email address is invalid', FlashCategories.WARN
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
@@ -116,15 +117,15 @@ def create_user(email, name, password, confirm):
                        (email, name, generate_password_hash(password)))
         # TODO verify email before activating user
     except sqlite3.IntegrityError:
-        return 'Email already exists. Try Log In or Forgot Password.', WARN
+        return 'Email already exists. Try Log In or Forgot Password.', FlashCategories.WARN
     finally:
         db.close()
-    return 'New user created. You can go log in.', SUCCESS
+    return 'New user created. You can go log in.', FlashCategories.SUCCESS
 
 
 def send_reset_pwd_email(email):
     if not email:
-        return 'Email address is required.', WARN
+        return 'Email address is required.', FlashCategories.WARN
     db = sqlite3.connect(DB_FILENAME)
     try:
         cur = db.execute("""SELECT id FROM users WHERE email = ?""", (email,))
@@ -145,19 +146,19 @@ def send_reset_pwd_email(email):
                     server.sendmail(FROM_EMAIL, email, msg)
     # noinspection PyBroadException
     except:
-        return 'Error sending reset email. Try again later or contat support.', ERROR
+        return 'Error sending reset email. Try again later or contat support.', FlashCategories.ERROR
     finally:
         db.close()
-    return 'If email address is valid, an email will be sent with a password reset link.', SUCCESS
+    return 'If email address is valid, an email will be sent with a password reset link.', FlashCategories.SUCCESS
 
 
 def do_password_reset(email, password, confirm, reset_code):
     if not (email and password and confirm):
-        return 'All fields are required.', WARN
+        return 'All fields are required.', FlashCategories.WARN
     if not reset_code:
-        return 'Reset code invalid or expired. Try again.', ERROR
+        return 'Reset code invalid or expired. Try again.', FlashCategories.ERROR
     if password != confirm:
-        return 'Passwords must match.', WARN
+        return 'Passwords must match.', FlashCategories.WARN
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
@@ -168,18 +169,18 @@ def do_password_reset(email, password, confirm, reset_code):
                          (reset_code,))
         row = cur.fetchone()
         if not row:
-            return 'Reset code invalid or expired. Try again.', ERROR
+            return 'Reset code invalid or expired. Try again.', FlashCategories.ERROR
         if row[1] != email:
-            return 'Invalid email address.', WARN
+            return 'Invalid email address.', FlashCategories.WARN
         with db:
             db.execute("""UPDATE users SET pw_hash = ? WHERE id = ?""", (generate_password_hash(password), row[0]))
             db.execute("""DELETE FROM pwresets WHERE reset_code = ?""", (reset_code,))
     # noinspection PyBroadException
     except:
-        return 'Error resetting password. Try again later or contact support.', ERROR
+        return 'Error resetting password. Try again later or contact support.', FlashCategories.ERROR
     finally:
         db.close()
-    return 'Password successfully reset.', SUCCESS
+    return 'Password successfully reset.', FlashCategories.SUCCESS
 
 
 def do_submit_word(user, word):

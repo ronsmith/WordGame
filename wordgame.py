@@ -78,7 +78,7 @@ def login():
             session['user'] = user
             return redirect(url_for(request.args.get('next', 'index')))
         else:
-            flash('Invalid login.', WARN)
+            flash('Invalid login.', FlashCategories.WARN)
     return render_template('login.html')
 
 
@@ -95,7 +95,7 @@ def signup():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logout successful.', SUCCESS)
+    flash('Logout successful.', FlashCategories.SUCCESS)
     return redirect(url_for('index'))
 
 
@@ -123,7 +123,7 @@ def reset_password():
         msg, cat = do_password_reset(request.form.get('email'), request.form.get('password'), 
                                      request.form.get('confirm'), reset_code)
         flash(msg, cat)
-        if cat in (SUCCESS, ERROR):
+        if cat in (FlashCategories.SUCCESS, FlashCategories.ERROR):
             return redirect(url_for('index'))
     else:
         reset_code = request.args.get('resetcode')
