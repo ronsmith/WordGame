@@ -71,8 +71,8 @@ def profile():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    session.clear()
     if request.method == 'POST':
+        session.clear()
         user = get_authenticated_user(request.form.get('email'), request.form.get('password'))
         if user:
             session['user'] = user
@@ -130,6 +130,18 @@ def reset_password():
     if not reset_code:
         abort(400)
     return render_template('resetpwd.html', reset_code=reset_code)
+
+
+@app.route('/verifyemail')
+def verify_email():
+    session.clear()
+    email = request.args.get('email')
+    code = request.args.get('code')
+    if not (email and code):
+        abort(400)
+    msg, cat = do_verify_email(email, code)
+    flash(msg, cat)
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':

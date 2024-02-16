@@ -110,12 +110,15 @@ def create_user(email, name, password, confirm):
         return 'Passwords must match', FlashCategories.WARN
     if not re.fullmatch(EMAIL_REGEX, email):
         return 'Email address is invalid', FlashCategories.WARN
+
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
             db.execute("""INSERT INTO users (email, name, pw_hash, active) VALUES (?, ?, ?, FALSE)""",
                        (email, name, generate_password_hash(password)))
-        # TODO verify email before activating user
+
+        send_verify_email(email)
+
     except sqlite3.IntegrityError:
         return 'Email already exists. Try Log In or Forgot Password.', FlashCategories.WARN
     finally:
@@ -123,9 +126,70 @@ def create_user(email, name, password, confirm):
     return 'New user created. You must verify your email address before you can login.', FlashCategories.SUCCESS
 
 
+def send_verify_email(email):
+    assert email
+
+    db = sqlite3.connect(DB_FILENAME)
+    try:
+        cur = db.execute("""SELECT id FROM users WHERE email = ?""", (email,))
+        row = cur.fetchone()
+        if row:
+            verify_code = uuid1().hex
+            with db:
+                db.execute(f"""INSERT INTO vercodes (user_id, ver_code, expire_time) 
+                                VALUES (?, ?, datetime('now', ?, ?))""",
+                           (row[0], verify_code, get_eastern_adjustment(), '+' + VERIFY_EMAIL_EXPIRE_TIME))
+
+                msg = 'Use the link below to verify your email.\n\n' + \
+                      url_for('verify_email', code=verify_code, email=email, _external=True) + \
+                      f'\n\nThe link will expire in {VERIFY_EMAIL_EXPIRE_TIME}.\n'
+
+                send_email('Word Game Verify Email', email, msg)
+
+    # noinspection PyBroadException
+    except:
+        return 'Error sending email with reset link. Try again later or contat support.', FlashCategories.ERROR
+    finally:
+        db.close()
+    return 'If email address is valid, an email will be sent with a password reset link.', FlashCategories.SUCCESS
+
+
+def do_verify_email(email, code):
+    assert email
+    assert code
+
+    db = sqlite3.connect(DB_FILENAME)
+    try:
+        with db:
+            db.execute("""DELETE FROM vercodes WHERE datetime('now', ?) > expire_time""", (get_eastern_adjustment(),))
+
+        cur = db.execute("""SELECT user_id, email FROM vercodes, users 
+                             WHERE vercodes.ver_code = ? 
+                               AND vercodes.user_id = users.id
+                               AND users.email = ?""",
+                         (code, email,))
+
+        row = cur.fetchone()
+        if not row:
+            return 'Verification code invalid or expired. Try again.', FlashCategories.ERROR
+
+        with db:
+            db.execute("""UPDATE users SET active = TRUE WHERE id = ?""", (row[0],))
+            db.execute("""DELETE FROM vercodes WHERE ver_code = ?""", (code,))
+
+        return 'Email verified. You may now log in and play.', FlashCategories.SUCCESS
+
+    # noinspection PyBroadException
+    except:
+        return 'Error verifying email. Try again later or contact support.', FlashCategories.ERROR
+    finally:
+        db.close()
+
+
 def send_reset_pwd_email(email):
     if not email:
         return 'Email address is required.', FlashCategories.WARN
+
     db = sqlite3.connect(DB_FILENAME)
     try:
         cur = db.execute("""SELECT id FROM users WHERE email = ?""", (email,))
@@ -135,20 +199,14 @@ def send_reset_pwd_email(email):
             with db:
                 db.execute(f"""INSERT INTO vercodes (user_id, ver_code, expire_time) 
                                 VALUES (?, ?, datetime('now', ?, ?))""",
-                           (row[0], reset_code, get_eastern_adjustment(), PW_RESET_EXPIRE_TIME))
+                           (row[0], reset_code, get_eastern_adjustment(), '+' + PW_RESET_EXPIRE_TIME))
 
-                msg = 'Subject: Word Game Password Reset\n' + \
-                      f'From: {FROM_EMAIL}\n\n' + \
-                      'Use the link below to reset your password\n' + \
-                      url_for('reset_password', resetcode=reset_code, _external=True)
+                msg = 'Use the link below to reset your password.\n\n' + \
+                      url_for('reset_password', resetcode=reset_code, _external=True) + \
+                      f'\n\nThe link will expire in {PW_RESET_EXPIRE_TIME}.\n'
 
-                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    if SMTP_USE_TLS:
-                        context = ssl.create_default_context()
-                        server.starttls(context=context)
-                    if SMTP_USERNAME and SMTP_PASSWORD:
-                        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                    server.sendmail(FROM_EMAIL, email, msg)
+                send_email('Word Game Password Reset', email, msg)
+
     # noinspection PyBroadException
     except:
         return 'Error sending email with reset link. Try again later or contat support.', FlashCategories.ERROR
@@ -172,7 +230,7 @@ def do_password_reset(email, password, confirm, reset_code):
         cur = db.execute("""SELECT user_id, email FROM vercodes, users 
                             WHERE vercodes.ver_code = ? 
                               AND vercodes.user_id = users.id""",
-                         (reset_code,))
+                         (reset_code, email))
 
         row = cur.fetchone()
         if not row:
@@ -183,12 +241,15 @@ def do_password_reset(email, password, confirm, reset_code):
         with db:
             db.execute("""UPDATE users SET pw_hash = ? WHERE id = ?""", (generate_password_hash(password), row[0]))
             db.execute("""DELETE FROM vercodes WHERE ver_code = ?""", (reset_code,))
+
+        return 'Password successfully reset.', FlashCategories.SUCCESS
+
     # noinspection PyBroadException
     except:
         return 'Error resetting password. Try again later or contact support.', FlashCategories.ERROR
     finally:
         db.close()
-    return 'Password successfully reset.', FlashCategories.SUCCESS
+
 
 
 def do_submit_word(user, word):
@@ -261,3 +322,15 @@ def generate_game_state(user):
         return data
     finally:
         db.close()
+
+
+def send_email(subj, to_email, msg):
+    headers = f'Subject: {subj}\nFrom: {FROM_EMAIL}\n\n'
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        if SMTP_USE_TLS:
+            context = ssl.create_default_context()
+            server.starttls(context=context)
+        if SMTP_USERNAME and SMTP_PASSWORD:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(FROM_EMAIL, to_email, headers + msg)
+
