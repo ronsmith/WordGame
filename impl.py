@@ -133,9 +133,9 @@ def send_reset_pwd_email(email):
         if row:
             reset_code = uuid1().hex
             with db:
-                db.execute(f"""INSERT INTO pwresets (user_id, reset_code, expire_time) 
-                                VALUES (?, ?, datetime('now', ?, '{PW_RESET_EXPIRE_TIME}'))""",
-                           (row[0], reset_code, get_eastern_adjustment()))
+                db.execute(f"""INSERT INTO vercodes (user_id, ver_code, expire_time) 
+                                VALUES (?, ?, datetime('now', ?, ?))""",
+                           (row[0], reset_code, get_eastern_adjustment(), PW_RESET_EXPIRE_TIME))
 
                 msg = 'Subject: Word Game Password Reset\n' + \
                       f'From: {FROM_EMAIL}\n\n' + \
@@ -167,19 +167,22 @@ def do_password_reset(email, password, confirm, reset_code):
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
-            db.execute("""DELETE FROM pwresets WHERE datetime('now', ?) > expire_time""", (get_eastern_adjustment(),))
-        cur = db.execute("""SELECT user_id, email FROM pwresets, users 
-                            WHERE pwresets.reset_code = ? 
-                              AND pwresets.user_id = users.id""",
+            db.execute("""DELETE FROM vercodes WHERE datetime('now', ?) > expire_time""", (get_eastern_adjustment(),))
+
+        cur = db.execute("""SELECT user_id, email FROM vercodes, users 
+                            WHERE vercodes.ver_code = ? 
+                              AND vercodes.user_id = users.id""",
                          (reset_code,))
+
         row = cur.fetchone()
         if not row:
             return 'Reset code invalid or expired. Try again.', FlashCategories.ERROR
         if row[1] != email:
             return 'Invalid email address.', FlashCategories.WARN
+
         with db:
             db.execute("""UPDATE users SET pw_hash = ? WHERE id = ?""", (generate_password_hash(password), row[0]))
-            db.execute("""DELETE FROM pwresets WHERE reset_code = ?""", (reset_code,))
+            db.execute("""DELETE FROM vercodes WHERE ver_code = ?""", (reset_code,))
     # noinspection PyBroadException
     except:
         return 'Error resetting password. Try again later or contact support.', FlashCategories.ERROR
@@ -195,10 +198,12 @@ def do_submit_word(user, word):
         cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (word,))
         if not cur.fetchone()[0]:
             return {'status': 'error', 'message': 'Unknown word. Try another.'}
+
         with db:
             db.execute("""INSERT INTO attempts (user_id, game_id, word, timestamp, success)
                             VALUES (?, ?, ?, datetime('now', ?), ?)""",
                        (user['id'], game['id'], word, get_eastern_adjustment(), (word == game['word'])))
+
         return generate_game_state(user)
     finally:
         db.close()

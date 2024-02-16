@@ -47,13 +47,13 @@ try:
             """CREATE INDEX IF NOT EXISTS attempts_search_index on attempts (user_id, game_id, timestamp, success)""")
 
     with db:
-        db.execute("""CREATE TABLE IF NOT EXISTS pwresets (
+        db.execute("""CREATE TABLE IF NOT EXISTS vercodes (
                         id          INTEGER PRIMARY KEY,
                         user_id     INTEGER NOT NULL REFERENCES users (id),
-                        reset_code  TEXT NOT NULL,
+                        ver_code    TEXT NOT NULL,
                         expire_time DATETIME NOT NULL
         )""")
-        db.execute("""CREATE INDEX IF NOT EXISTS pwresets_search_index on pwresets (reset_code)""")
+        db.execute("""CREATE INDEX IF NOT EXISTS vercodes_search_index on vercodes (ver_code)""")
 
 finally:
     db.close()
