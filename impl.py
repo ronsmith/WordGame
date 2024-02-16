@@ -2,7 +2,7 @@ import sqlite3
 import threading
 import functools
 import re
-import smtplib
+import smtplib, ssl
 from uuid import uuid1
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
@@ -113,14 +113,14 @@ def create_user(email, name, password, confirm):
     db = sqlite3.connect(DB_FILENAME)
     try:
         with db:
-            db.execute("""INSERT INTO users (email, name, pw_hash) VALUES (?, ?, ?)""",
+            db.execute("""INSERT INTO users (email, name, pw_hash, active) VALUES (?, ?, ?, FALSE)""",
                        (email, name, generate_password_hash(password)))
         # TODO verify email before activating user
     except sqlite3.IntegrityError:
         return 'Email already exists. Try Log In or Forgot Password.', FlashCategories.WARN
     finally:
         db.close()
-    return 'New user created. You can go log in.', FlashCategories.SUCCESS
+    return 'New user created. You must verify your email address before you can login.', FlashCategories.SUCCESS
 
 
 def send_reset_pwd_email(email):
@@ -136,17 +136,22 @@ def send_reset_pwd_email(email):
                 db.execute(f"""INSERT INTO pwresets (user_id, reset_code, expire_time) 
                                 VALUES (?, ?, datetime('now', ?, '{PW_RESET_EXPIRE_TIME}'))""",
                            (row[0], reset_code, get_eastern_adjustment()))
-                msg = 'Subject: Word Game Password Reset\n\n' + \
+
+                msg = 'Subject: Word Game Password Reset\n' + \
+                      f'From: {FROM_EMAIL}\n\n' + \
                       'Use the link below to reset your password\n' + \
                       url_for('reset_password', resetcode=reset_code, _external=True)
-                # TODO: use real email server
+
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
                     if SMTP_USE_TLS:
-                        pass  # TODO: support TLS
+                        context = ssl.create_default_context()
+                        server.starttls(context=context)
+                    if SMTP_USERNAME and SMTP_PASSWORD:
+                        server.login(SMTP_USERNAME, SMTP_PASSWORD)
                     server.sendmail(FROM_EMAIL, email, msg)
     # noinspection PyBroadException
     except:
-        return 'Error sending reset email. Try again later or contat support.', FlashCategories.ERROR
+        return 'Error sending email with reset link. Try again later or contat support.', FlashCategories.ERROR
     finally:
         db.close()
     return 'If email address is valid, an email will be sent with a password reset link.', FlashCategories.SUCCESS
