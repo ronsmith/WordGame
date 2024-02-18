@@ -1,7 +1,8 @@
 import os
 from flask import Flask, request, render_template, flash, session, redirect, abort, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
-from impl import *
+from user import *
+from play import *
 
 app = Flask('WordGame')
 app.config['SECRET_KEY'] = 't(X9Day:V{nygE8+3Q36(9h#<)u7=i]U,X/?Xrd`)pt+BHR&x+d/HX9<k.l=rbS'
@@ -62,13 +63,6 @@ def submit_word():
     return do_submit_word(session['user'], word)
 
 
-@app.route('/profile')
-def profile():
-    if 'user' not in session:
-        return redirect(url_for('login', next='index'))
-    return render_template('profile.html')
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -108,11 +102,20 @@ def forgot_password():
     return render_template('forgotpwd.html')
 
 
-@app.route('/changepwd', methods=['GET', 'POST'])
-def change_password():
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user' not in session:
+        return redirect(url_for('login', next='index'))
+    msg = cat = None
     if request.method == 'POST':
-        pass  # TODO
-    return render_template('changepwd.html')
+        if all(v in request.form for v in ('email', 'name')):
+            msg, cat = do_update_email_name(session['user'], request.form['email'], request.form['name'])
+        elif all(v in request.form for v in ('current_password', 'new_password', 'confirm_password')):
+            msg, cat = do_change_password(session['user'], request.form['current_password'],
+                                          request.form['new_password'], request.form['confirm_password'])
+        if msg and cat:
+            flash(msg, cat)
+    return render_template('profile.html', **{'user': session['user']})
 
 
 @app.route('/resetpwd', methods=['GET', 'POST'])
@@ -145,4 +148,4 @@ def verify_email():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run()
