@@ -118,6 +118,19 @@ def profile():
     return render_template('profile.html', **{'user': session['user']})
 
 
+@app.route('/verifyemailchange')
+def verify_email_change():
+    ver_code = request.args.get('vercode')
+    new_email = request.args.get('newemail')
+    if not (ver_code and new_email):
+        abort(400)
+    msg, cat = do_verify_email_change(ver_code, new_email)
+    flash(msg, cat)
+    return redirect(url_for('index'))
+
+
+
+
 @app.route('/resetpwd', methods=['GET', 'POST'])
 def reset_password():
     session.clear()

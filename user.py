@@ -189,15 +189,54 @@ def do_change_password(user, current_password, new_password, confirm_password):
 
         if row and check_password_hash(row[0], current_password):
             with db:
-                db.execute("""UPDATE users SET pw_hash = ? WHERE id = ?""",
-                           (generate_password_hash(new_password), row[0]))
+                cur = db.execute("""UPDATE users SET pw_hash = ? WHERE id = ?""",
+                           (generate_password_hash(new_password), user['id']))
+                if cur.rowcount < 1:
+                    return 'Failed to change the password. Log out and back in, then try again.', FlashCategories.ERROR
             return 'Password successfully updated.', FlashCategories.SUCCESS
+        else:
+            return 'Current password is incorrect.', FlashCategories.WARN
 
     # noinspection PyBroadException
     except:
         return 'Error resetting password. Try again later or contact support.', FlashCategories.ERROR
     finally:
         db.close()
+
+
+def do_update_email(user, new_email):
+    assert user
+    assert new_email
+
+    ver_code = uuid1().hex
+    db = get_db()
+    try:
+        with db:
+            db.execute(f"""INSERT INTO vercodes (user_id, ver_code, expire_time) 
+                            VALUES (?, ?, datetime('now', ?, ?))""",
+                       (user['id'], ver_code, get_tz_adj(), '+' + VERIFY_EMAIL_EXPIRE_TIME))
+
+            msg = 'Use the link below to verify your email address.\n\n' + \
+                  url_for('verify_email_change', vercode=ver_code, newemail=new_email, _external=True) + \
+                  f'\n\nThe link will expire in {VERIFY_EMAIL_EXPIRE_TIME}.\n'
+
+            send_email('Word Game Change Email', new_email, msg)
+
+        return 'An email has been sent to the new address with a verification link.', FlashCategories.SUCCESS
+
+    # noinspection PyBroadException
+    except:
+        return 'Error sending email with reset link. Try again later or contat support.', FlashCategories.ERROR
+    finally:
+        db.close()
+
+
+def do_verify_email_change(ver_code, new_email):
+    pass
+
+
+def do_update_name(user, new_name):
+    pass
 
 
 def do_update_email_name(user, new_email, new_name):
@@ -206,14 +245,21 @@ def do_update_email_name(user, new_email, new_name):
     if not re.fullmatch(EMAIL_REGEX, new_email):
         return 'Email address is invalid', FlashCategories.WARN
 
-    db = get_db()
-    try:
-        pass  # TODO
-    # noinspection PyBroadException
-    except:
-        return 'Error resetting password. Try again later or contact support.', FlashCategories.ERROR
-    finally:
-        db.close()
+    return_list = []
+
+    if new_email != user['email']:
+        return_list.append(do_update_email(user, new_email))
+    else:
+        return_list.append(('Email was not changed.', FlashCategories.INFO))
+
+    if new_name != user('name'):
+        return_list.append(do_update_name(user, new_name))
+    else:
+        return_list.append(('Name was not changed.', FlashCategories.INFO))
+
+    if not return_list:
+        return_list.append(('Nothing to do.', FlashCategories.INFO))
+    return return_list
 
 
 def do_verify_updated_email(old_email, new_email, code):
