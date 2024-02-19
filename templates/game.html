@@ -140,7 +140,7 @@
             paint_keyboard(data.keyboard);
             if (game_status != 'playing') {
                 let msg = (game_status == 'win' ? 'Great Job!' : 'Better luck next time.')
-                $("#msgarea").html(msg + '<br>The word was <a href="https://www.dictionary.com/browse/' +
+                $("#msgarea").html(msg + '<br>The word was <a href="https://www.merriam-webster.com/dictionary/' +
                     data.word_was + '" target="_blank">' + data.word_was + '</a></p>');
             }
         }
