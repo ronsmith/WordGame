@@ -42,8 +42,8 @@
                     <th>Player</th>
                     <th>Today</th>
                     <th>Yesterday</th>
-                    <th>Average Tries</th>
-                    <th>Average Wins</th>
+                    <th align="center">Average Tries</th>
+                    <th align="center">Average Wins</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,8 +56,8 @@
                     {% else %}
                         <td colspan="2">{{ stats.last_played|default('&nbsp;') }}</td>
                     {% endif %}
-                    <td>{{ stats.avg_attempts|default('&nbsp;') }}</td>
-                    <td>{{ stats.avg_wins|default('&nbsp;') }}</td>
+                    <td align="center">{{ stats.avg_attempts|default('&nbsp;') }}</td>
+                    <td align="center">{{ stats.avg_wins|default('&nbsp;') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
