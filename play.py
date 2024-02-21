@@ -47,6 +47,69 @@ def get_current_game(include_word=False):
         db.close()
 
 
+def get_scoreboard_data():
+    db = get_db()
+    tz_adj = get_tz_adj()
+    scoreboard = []
+    try:
+        cur = db.execute("""
+            SELECT users.name, today.attempts, today.win, yesterday.attempts, yesterday.win,
+                   (SELECT julianday('now', ?) - julianday(max(date(timestamp)))
+                    FROM attempts WHERE user_id = users.id) "last_played",
+                   avg_attempts, avg_wins
+            FROM users
+            LEFT OUTER JOIN (
+                SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
+                FROM attempts
+                WHERE date = date('now', ?)
+                GROUP BY user_id, date
+            ) as today ON today.user_id = users.id
+            LEFT OUTER JOIN (
+                SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
+                FROM attempts
+                WHERE date = date('now', '-1 day', ?)
+                GROUP BY user_id, date
+            ) as yesterday ON yesterday.user_id = users.id
+            LEFT OUTER JOIN (
+                SELECT user_id, date, avg(attempts) "avg_attempts", avg(win) "avg_wins"
+                FROM (SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
+                        FROM attempts GROUP BY user_id, date) as atmpt_smry
+                GROUP BY user_id
+            ) as averages ON averages.user_id = users.id
+            WHERE users.active = True
+            ORDER BY avg_attempts DESC, avg_wins DESC 
+        """, (tz_adj, tz_adj, tz_adj))
+
+        for player, today_attempts, today_win, yesterday_attempts, yesterday_win, last_played, avg_attempts, avg_wins in cur:
+
+            stats = {'player': player, 'avg_attempts': round(avg_attempts, 2), 'avg_wins': round(avg_wins, 2)}
+
+            if today_attempts or yesterday_attempts:
+
+                if today_win:
+                    stats['today'] = f"Won in {today_attempts} tries."
+                elif today_attempts:
+                    stats['today'] = "In progress."
+                else:
+                    stats['today'] = "Hasn't started yet."
+
+                if yesterday_win:
+                    stats['yesterday'] = f"Won in {yesterday_attempts} tries."
+                elif yesterday_attempts:
+                    stats['yesterday'] = "Didn't finish."
+                else:
+                    stats['yesterday'] = "Didn't play."
+
+            else:
+                stats['last_played'] = f"Last played {int(last_played)} days ago."
+
+            scoreboard.append(stats)
+
+    finally:
+        db.close()
+        return scoreboard
+
+
 def get_last_play_data(user):
     db = get_db()
     try:

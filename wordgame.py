@@ -30,7 +30,9 @@ def index():
     return render_template('index.html', **{
         'user': session['user'],
         'last_play': get_last_play_data(session['user']),
-        'current_game': get_current_game()})
+        'current_game': get_current_game(),
+        'scoreboard': get_scoreboard_data(),
+    })
 
 
 @app.route('/game')
