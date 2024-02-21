@@ -77,7 +77,7 @@ def get_scoreboard_data():
                 GROUP BY user_id
             ) as averages ON averages.user_id = users.id
             WHERE users.active = True
-            ORDER BY avg_attempts DESC, avg_wins DESC 
+            ORDER BY avg_wins DESC, avg_attempts ASC 
         """, (tz_adj, tz_adj, tz_adj))
 
         for player, today_attempts, today_win, yesterday_attempts, yesterday_win, last_played, avg_attempts, avg_wins in cur:
