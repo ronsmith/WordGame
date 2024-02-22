@@ -167,11 +167,11 @@ def generate_game_state(user):
         kb_green = set()
         kb_orange = set()
         kb_black = set()
-        for word, success in cur:
+        for guess, success in cur:
             if success:
                 status = 'win'
-            row = {'word': word, 'colors': []}
-            for i, letter in enumerate(word):
+            row = {'guess': guess, 'colors': []}
+            for i, letter in enumerate(guess):
                 if game['word'][i] == letter:
                     row['colors'].append('green')
                     kb_green.add(letter)
