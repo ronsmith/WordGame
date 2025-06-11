@@ -3,9 +3,10 @@ from flask import Flask, request, render_template, flash, session, redirect, abo
 from werkzeug.middleware.proxy_fix import ProxyFix
 from user import *
 from play import *
+from config import SECRET_KEY
 
 app = Flask('WordGame')
-app.config['SECRET_KEY'] = 't(X9Day:V{nygE8+3Q36(9h#<)u7=i]U,X/?Xrd`)pt+BHR&x+d/HX9<k.l=rbS'
+app.config['SECRET_KEY'] = SECRET_KEY
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 
