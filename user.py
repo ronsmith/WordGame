@@ -115,6 +115,7 @@ def send_reset_pwd_email(email):
         return 'Email address is required.', FlashCategories.WARN
 
     db = get_db()
+    # noinspection PyBroadException
     try:
         cur = db.execute("""SELECT id FROM users WHERE email = ?""", (email,))
         row = cur.fetchone()
@@ -130,13 +131,11 @@ def send_reset_pwd_email(email):
                       f'\n\nThe link will expire in {PW_RESET_EXPIRE_TIME}.\n'
 
                 send_email('Word Game Password Reset', email, msg)
-
-    # noinspection PyBroadException
+        return 'If email address is valid, an email will be sent with a password reset link.', FlashCategories.SUCCESS
     except:
-        return 'Error sending email with reset link. Try again later or contat support.', FlashCategories.ERROR
+        return 'Error sending email with reset link. Try again later or contact support.', FlashCategories.ERROR
     finally:
         db.close()
-    return 'If email address is valid, an email will be sent with a password reset link.', FlashCategories.SUCCESS
 
 
 def do_password_reset(email, password, confirm, reset_code):
