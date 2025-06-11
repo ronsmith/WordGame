@@ -54,35 +54,46 @@ def get_scoreboard_data():
     try:
         cur = db.execute("""
             SELECT users.name, today.attempts, today.win, yesterday.attempts, yesterday.win,
-                   (SELECT julianday('now', ?) - julianday(max(date(timestamp)))
+                   (SELECT julianday('now', :tzadj) - julianday(max(date(timestamp)))
                     FROM attempts WHERE user_id = users.id) "last_played",
-                   avg_attempts, avg_wins
+                   coalesce(avg_attempts, 0), coalesce(elo_rank, 0)
             FROM users
             LEFT OUTER JOIN (
                 SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
                 FROM attempts
-                WHERE date = date('now', ?)
+                WHERE date = date('now', :tzadj)
                 GROUP BY user_id, date
             ) as today ON today.user_id = users.id
             LEFT OUTER JOIN (
                 SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
                 FROM attempts
-                WHERE date = date('now', '-1 day', ?)
+                WHERE date = date('now', '-1 day', :tzadj)
                 GROUP BY user_id, date
             ) as yesterday ON yesterday.user_id = users.id
             LEFT OUTER JOIN (
-                SELECT user_id, date, avg(attempts) "avg_attempts", avg(win) "avg_wins"
-                FROM (SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
-                        FROM attempts GROUP BY user_id, date) as atmpt_smry
-                GROUP BY user_id
+                WITH scores as (
+                    SELECT user_id, date(timestamp) "date", count(*) "attempts", max(success) "win"
+                    FROM attempts
+                    GROUP BY user_id, date
+                )
+                SELECT user_id, date, avg_attempts, (wins + 5 * all_win_avg) / (wins + losses + 5) as elo_rank
+                FROM (
+                    SELECT user_id, date, avg(attempts) as avg_attempts,
+                        (select count(*) from scores w where w.user_id = s.user_id and win == TRUE)  as wins,
+                        (select count(*) from scores l where l.user_id = s.user_id and win == FALSE) as losses,
+                        (select avg(win) from scores) as all_win_avg
+                    FROM scores s
+                    GROUP BY user_id
+                )
+                ORDER BY elo_rank
             ) as averages ON averages.user_id = users.id
             WHERE users.active = True
-            ORDER BY avg_wins DESC, avg_attempts ASC 
-        """, (tz_adj, tz_adj, tz_adj))
+            ORDER BY elo_rank DESC, avg_attempts ASC 
+        """, {'tzadj': tz_adj})
 
-        for player, today_attempts, today_win, yesterday_attempts, yesterday_win, last_played, avg_attempts, avg_wins in cur:
+        for player, today_attempts, today_win, yesterday_attempts, yesterday_win, last_played, avg_attempts, elo_rank in cur:
 
-            stats = {'player': player, 'avg_attempts': round(avg_attempts, 2), 'avg_wins': round(avg_wins, 2)}
+            stats = {'player': player, 'avg_attempts': round(avg_attempts), 'elo_rank': round(elo_rank * 100)}
 
             if today_attempts or yesterday_attempts:
 
@@ -101,13 +112,16 @@ def get_scoreboard_data():
                     stats['yesterday'] = "Didn't play."
 
             else:
-                stats['last_played'] = f"Last played {int(last_played)} days ago."
+                if last_played is not None:
+                    stats['last_played'] = f"Last played {int(last_played)} days ago."
+                else:
+                    stats['last_played'] = "Never played."
 
             scoreboard.append(stats)
 
     finally:
         db.close()
-        return scoreboard
+    return scoreboard
 
 
 def get_last_play_data(user):

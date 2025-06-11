@@ -38,7 +38,7 @@
                     <th>Today</th>
                     <th>Yesterday</th>
                     <th align="center">Average Tries</th>
-                    <th align="center">Average Wins</th>
+                    <th align="center">Player Rank</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,7 +52,7 @@
                         <td colspan="2">{{ stats.last_played|default('&nbsp;') }}</td>
                     {% endif %}
                     <td align="center">{{ stats.avg_attempts|default('&nbsp;') }}</td>
-                    <td align="center">{{ stats.avg_wins|default('&nbsp;') }}</td>
+                    <td align="center">{{ stats.elo_rank|default('&nbsp;') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
