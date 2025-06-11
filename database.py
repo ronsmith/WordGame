@@ -3,7 +3,7 @@ from config import DB_FILENAME
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-TIME_ZONE = ZoneInfo('US/Eastern')
+TIME_ZONE = ZoneInfo('America/New_York')
 
 
 def get_db():
