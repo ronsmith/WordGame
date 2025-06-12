@@ -34,7 +34,7 @@ def get_current_game(include_word=False):
             """, (tz_adj,))
             row = cur.fetchone()
             word = row[0]
-            with db:  # creates a trnsaction balance
+            with db:  # creates a trnsaction boundary for the insert and update
                 db.execute("""INSERT INTO games (word, game_date) VALUES (?, date('now', ?))""", (word, tz_adj))
                 db.execute("""UPDATE words SET last_used = date('now', ?) WHERE word = ?""", (tz_adj, word,))
             cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', ?)""", (tz_adj,))
