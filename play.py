@@ -22,9 +22,13 @@ def get_current_game(include_word=False):
     db = get_db()
     tz_adj = get_tz_adj()
     try:
-        cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', ?)""", (tz_adj,))
+        cur = db.execute("""
+            SELECT id, game_date, word 
+            FROM games 
+            WHERE game_date == date('now', :tzadj)
+        """, {'tzadj': tz_adj})
         row = cur.fetchone()
-        if not row:
+        if not row:  # need to start a new game
             cur = db.execute("""
                 SELECT word FROM words
                 WHERE word_len = 5
@@ -34,10 +38,21 @@ def get_current_game(include_word=False):
             """, (tz_adj,))
             row = cur.fetchone()
             word = row[0]
-            with db:  # creates a trnsaction boundary for the insert and update
-                db.execute("""INSERT INTO games (word, game_date) VALUES (?, date('now', ?))""", (word, tz_adj))
-                db.execute("""UPDATE words SET last_used = date('now', ?) WHERE word = ?""", (tz_adj, word,))
-            cur = db.execute("""SELECT id, game_date, word FROM games WHERE game_date == date('now', ?)""", (tz_adj,))
+            with db:  # creates a transaction boundary for the insert and update
+                db.execute("""
+                    INSERT INTO games (word, game_date) 
+                    VALUES (:word, date('now', :tzadj))
+                """, {'tzadj': tz_adj, 'word': word})
+                db.execute("""
+                    UPDATE words 
+                    SET last_used = date('now', :tzadj) 
+                    WHERE word = :word
+                """, {'tzadj': tz_adj, 'word': word})
+            cur = db.execute("""
+                SELECT id, game_date, word 
+                FROM games 
+                WHERE game_date == date('now', :tzadj)
+            """, {'tzadj': tz_adj})
             row = cur.fetchone()
 
         data = {'id': row[0], 'date': row[1]}
