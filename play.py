@@ -169,13 +169,16 @@ def get_last_play_data(user):
 
 
 def do_submit_word(user, word):
+    # TODO: this could get weird if they submit the word right at midnight. Maybe submit with a date
     game = get_current_game(include_word=True)
     db = get_db()
     try:
+        # see if the word they submitted is a valid word in the dictionary
         cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (word,))
         if not cur.fetchone()[0]:
             return {'status': 'error', 'message': 'Unknown word. Try another.'}
 
+        # Add the attempt to the database
         with db:
             db.execute("""
                 INSERT INTO attempts (user_id, game_id, word, timestamp, success)
@@ -189,6 +192,8 @@ def do_submit_word(user, word):
             })
     finally:
         db.close()
+
+    # Then return the game board for the user
     return generate_game_state(user)
 
 
