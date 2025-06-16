@@ -28,6 +28,7 @@ def get_current_game(include_word=False):
             WHERE game_date == date('now', :tzadj)
         """, {'tzadj': tz_adj})
         row = cur.fetchone()
+
         if not row:  # need to start a new game
             cur = db.execute("""
                 SELECT word FROM words
@@ -38,16 +39,23 @@ def get_current_game(include_word=False):
             """, (tz_adj,))
             row = cur.fetchone()
             word = row[0]
+
             with db:  # creates a transaction boundary for the insert and update
+
+                # create the new game for today
                 db.execute("""
                     INSERT INTO games (word, game_date) 
                     VALUES (:word, date('now', :tzadj))
                 """, {'tzadj': tz_adj, 'word': word})
+
+                # mark the word as used
                 db.execute("""
                     UPDATE words 
                     SET last_used = date('now', :tzadj) 
                     WHERE word = :word
                 """, {'tzadj': tz_adj, 'word': word})
+
+            # get the game from the database again so we have the id from the insert above
             cur = db.execute("""
                 SELECT id, game_date, word 
                 FROM games 
@@ -169,16 +177,13 @@ def get_last_play_data(user):
 
 
 def do_submit_word(user, word):
-    # TODO: this could get weird if they submit the word right at midnight. Maybe submit with a date
     game = get_current_game(include_word=True)
     db = get_db()
     try:
-        # see if the word they submitted is a valid word in the dictionary
         cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (word,))
         if not cur.fetchone()[0]:
             return {'status': 'error', 'message': 'Unknown word. Try another.'}
 
-        # Add the attempt to the database
         with db:
             db.execute("""
                 INSERT INTO attempts (user_id, game_id, word, timestamp, success)
@@ -194,10 +199,10 @@ def do_submit_word(user, word):
         db.close()
 
     # Then return the game board for the user
-    return generate_game_state(user)
+    return user_game_state(user)
 
 
-def generate_game_state(user):
+def user_game_state(user):
     game = get_current_game(include_word=True)
     db = get_db()
     try:
@@ -206,47 +211,50 @@ def generate_game_state(user):
             WHERE user_id = ? AND game_id = ? 
             ORDER BY timestamp ASC
         """, (user['id'], game['id']))
-        status = 'playing'
-        rows = []
-        kb_green = set()
-        kb_orange = set()
-        kb_black = set()
-        for word, success in cur:
-            if success:
-                status = 'win'
-            row = {'word': word, 'colors': []}
-            for i, letter in enumerate(word):
-                if game['word'][i] == letter:
-                    row['colors'].append('green')
-                    kb_green.add(letter)
-                    if letter in kb_orange:
-                        kb_orange.remove(letter)
-                    if letter in kb_black:
-                        kb_black.remove(letter)
-                elif letter in game['word']:
-                    row['colors'].append('orange')
-                    if letter not in kb_green:
-                        kb_orange.add(letter)
-                else:
-                    row['colors'].append('black')
-                    if letter not in kb_green and letter not in kb_orange:
-                        kb_black.add(letter)
-            rows.append(row)
-
-        if len(rows) >= 6 and status == 'playing':
-            status = 'loss'
-
-        data = {
-            'status': status,
-            'rows': rows,
-            'keyboard': {
-                'green': list(kb_green),
-                'orange': list(kb_orange),
-                'black': list(kb_black)
-            }
-        }
-        if status != 'playing':
-            data['word_was'] = game['word']
-        return data
+        return game_state(cur, game)
     finally:
         db.close()
+
+
+def game_state(attempts, game):
+    # extracted this method to allow for testing
+    status = 'playing'
+    rows = []
+    kb_green = set()
+    kb_orange = set()
+    kb_black = set()
+    for word, success in attempts:
+        if success:
+            status = 'win'
+        row = {'word': word, 'colors': []}
+        for i, letter in enumerate(word):
+            if game['word'][i] == letter:
+                row['colors'].append('green')
+                kb_green.add(letter)
+                if letter in kb_orange:
+                    kb_orange.remove(letter)
+                if letter in kb_black:
+                    kb_black.remove(letter)
+            elif letter in game['word']:
+                row['colors'].append('orange')
+                if letter not in kb_green:
+                    kb_orange.add(letter)
+            else:
+                row['colors'].append('black')
+                if letter not in kb_green and letter not in kb_orange:
+                    kb_black.add(letter)
+        rows.append(row)
+    if len(rows) >= 6 and status == 'playing':
+        status = 'loss'
+    data = {
+        'status': status,
+        'rows': rows,
+        'keyboard': {
+            'green': list(kb_green),
+            'orange': list(kb_orange),
+            'black': list(kb_black)
+        }
+    }
+    if status != 'playing':
+        data['word_was'] = game['word']
+    return data

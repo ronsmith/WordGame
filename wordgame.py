@@ -53,7 +53,7 @@ def howto():
 def game_state():
     if 'user' not in session:
         abort(401)
-    return generate_game_state(session['user'])
+    return user_game_state(session['user'])
 
 
 @app.route('/game/submit')
