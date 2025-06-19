@@ -211,31 +211,36 @@ def user_game_state(user):
             WHERE user_id = ? AND game_id = ? 
             ORDER BY timestamp ASC
         """, (user['id'], game['id']))
-        return game_state(cur, game)
+        return game_state(cur, game['word'])
     finally:
         db.close()
 
 
-def game_state(attempts, game):
-    # extracted this method to allow for testing
+def game_state(attempts, word):
+    """
+    Extracted this method to allow for testing
+    attempts: list or iterator that returns (word, success) pairs (word is each of the user's guesses)
+    game: dict containing id, date, and word (word is THE word for the date)
+    returns: data structure for the UI
+    """
     status = 'playing'
     rows = []
     kb_green = set()
     kb_orange = set()
     kb_black = set()
-    for word, success in attempts:
+    for guess, success in attempts:
         if success:
             status = 'win'
-        row = {'word': word, 'colors': []}
-        for i, letter in enumerate(word):
-            if game['word'][i] == letter:
+        row = {'word': guess, 'colors': []}
+        for i, letter in enumerate(guess):
+            if word[i] == letter:
                 row['colors'].append('green')
                 kb_green.add(letter)
                 if letter in kb_orange:
                     kb_orange.remove(letter)
                 if letter in kb_black:
                     kb_black.remove(letter)
-            elif letter in game['word']:
+            elif letter in word:
                 row['colors'].append('orange')
                 if letter not in kb_green:
                     kb_orange.add(letter)
@@ -256,5 +261,5 @@ def game_state(attempts, game):
         }
     }
     if status != 'playing':
-        data['word_was'] = game['word']
+        data['word_was'] = word
     return data
