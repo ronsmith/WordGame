@@ -226,7 +226,7 @@ def game_state(attempts, word):
     status = 'playing'
     rows = []
     kb_green = set()
-    kb_orange = set()
+    kb_yellow = set()
     kb_black = set()
     for guess, success in attempts:
         if success:
@@ -234,20 +234,21 @@ def game_state(attempts, word):
         row = {'word': guess, 'colors': []}
         for i, letter in enumerate(guess):
             if word[i] == letter:
-                row['colors'].append('green')
+                row['colors'].append('G')
                 kb_green.add(letter)
-                if letter in kb_orange:
-                    kb_orange.remove(letter)
+                if letter in kb_yellow:
+                    kb_yellow.remove(letter)
                 if letter in kb_black:
                     kb_black.remove(letter)
             elif letter in word:
-                row['colors'].append('orange')
+                row['colors'].append('Y')
                 if letter not in kb_green:
-                    kb_orange.add(letter)
+                    kb_yellow.add(letter)
             else:
-                row['colors'].append('black')
-                if letter not in kb_green and letter not in kb_orange:
+                row['colors'].append('B')
+                if letter not in kb_green and letter not in kb_yellow:
                     kb_black.add(letter)
+        row['colors'] = ''.join(row['colors'])
         rows.append(row)
     if len(rows) >= 6 and status == 'playing':
         status = 'loss'
@@ -255,9 +256,9 @@ def game_state(attempts, word):
         'status': status,
         'rows': rows,
         'keyboard': {
-            'green': list(kb_green),
-            'orange': list(kb_orange),
-            'black': list(kb_black)
+            'green': kb_green,
+            'yellow': kb_yellow,
+            'black': kb_black
         }
     }
     if status != 'playing':
