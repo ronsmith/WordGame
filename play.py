@@ -231,27 +231,45 @@ def game_state(attempts, word):
     for guess, success in attempts:
         if success:
             status = 'win'
-        row = {'word': guess, 'colors': []}
+
+        wlist = list(word)
+        colors = list('BBBBB')
+
+        pass # find green
         for i, letter in enumerate(guess):
-            if word[i] == letter:
-                row['colors'].append('G')
+            if wlist[i] == letter:
+                colors[i] = 'G'
+                wlist[i] = '*'
                 kb_green.add(letter)
                 if letter in kb_yellow:
                     kb_yellow.remove(letter)
                 if letter in kb_black:
                     kb_black.remove(letter)
-            elif letter in word:
-                row['colors'].append('Y')
-                if letter not in kb_green:
-                    kb_yellow.add(letter)
-            else:
-                row['colors'].append('B')
-                if letter not in kb_green and letter not in kb_yellow:
-                    kb_black.add(letter)
-        row['colors'] = ''.join(row['colors'])
+
+        pass # find yellow
+        for i, letter in enumerate(guess):
+            if colors[i] == 'G': continue
+            for x, w in enumerate(wlist):
+                if letter == w:
+                    colors[i] = 'Y'
+                    wlist[x] = '#'
+                    if letter not in kb_green:
+                        kb_yellow.add(letter)
+                    if letter in kb_black:
+                        kb_black.remove(letter)
+                    break
+
+        pass # everything else is black
+        for letter in guess:
+            if letter not in kb_green and letter not in kb_yellow:
+                kb_black.add(letter)
+
+        row = {'word': guess, 'colors': ''.join(colors)}
         rows.append(row)
+
     if len(rows) >= 6 and status == 'playing':
         status = 'loss'
+
     data = {
         'status': status,
         'rows': rows,
@@ -261,6 +279,8 @@ def game_state(attempts, word):
             'black': kb_black
         }
     }
+
     if status != 'playing':
         data['word_was'] = word
+
     return data

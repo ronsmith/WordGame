@@ -42,7 +42,7 @@ class TestGameState(TestCase):
             self.assertEqual(len(responses), len(state['rows']), f'Guess: {guess} has incorrect number of rows.')
             self.assertEqual(status, state['status'], f'Guess: {guess} has incorrect status.')
             for i, row in enumerate(state['rows']):
-                self.assertEqual(attempts[i][0], row['word'], f'Guess: {guess}, Row {i+1} has the rong word.')
+                self.assertEqual(attempts[i][0], row['word'], f'Guess: {guess}, Row {i+1} has the wrong word.')
                 self.assertEqual(responses[i], row['colors'], f'Guess: {guess}, Row {i+1} has incorrect colors.')
             self.assertEqual(kbg, state['keyboard']['green'], f'Guess: {guess}, Keyboard: green has incorrect letters.')
             self.assertEqual(kby, state['keyboard']['yellow'], f'Guess: {guess}, Keyboard: yellow has incorrect letters.')
