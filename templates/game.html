@@ -146,13 +146,21 @@
         }
     }
 
+    function color_map(c) {
+        switch (c) {
+            case 'G': return 'green';
+            case 'Y': return 'orange';
+            case 'B': return 'black';
+        }
+    }
+
     function paint_gameboard(rows) {
         $.each(rows, function (r, row) {
             let tr = $("table.gameboard tr:nth-child(" + (r + 1) + ")");
             $.each(row.word.split(''), function (i, letter) {
                 let td = tr.find("td:nth-child(" + (i + 1) + ")");
                 td.text(letter)
-                td.css('background-color', row.colors[i])
+                td.css('background-color', color_map(row.colors[i]))
             });
         });
 

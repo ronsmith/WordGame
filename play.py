@@ -1,8 +1,10 @@
 import threading
 import functools
+import logging
 from datetime import datetime
 from database import get_db, TIME_ZONE, get_tz_adj
 
+logger = logging.getLogger('__name__')
 
 def synchronized(wrapped):
     lock = threading.Lock()
@@ -176,25 +178,27 @@ def get_last_play_data(user):
         db.close()
 
 
-def do_submit_word(user, word):
+def do_submit_guess(user, guess):
     game = get_current_game(include_word=True)
     db = get_db()
     try:
-        cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (word,))
+        cur = db.execute("""SELECT count(*) > 0 FROM words WHERE word = ?""", (guess,))
         if not cur.fetchone()[0]:
             return {'status': 'error', 'message': 'Unknown word. Try another.'}
 
         with db:
             db.execute("""
                 INSERT INTO attempts (user_id, game_id, word, timestamp, success)
-                VALUES (:userid, :gameid, :word, datetime('now', :tzadj), :success)
+                VALUES (:userid, :gameid, :guess, datetime('now', :tzadj), :success)
             """, {
                 'userid': user['id'],
                 'gameid': game['id'],
-                'word': word,
-                'txadj': get_tz_adj(),
-                'success': (word == game['word'])
+                'guess': guess,
+                'tzadj': get_tz_adj(),
+                'success': (guess == game['word'])
             })
+    except:
+        logger.exception(f'Failed to insert attempt "{guess}" for user {user['id']} into game {game['id']}.')
     finally:
         db.close()
 
@@ -274,9 +278,9 @@ def game_state(attempts, word):
         'status': status,
         'rows': rows,
         'keyboard': {
-            'green': kb_green,
-            'yellow': kb_yellow,
-            'black': kb_black
+            'green': list(kb_green),
+            'yellow': list(kb_yellow),
+            'black': list(kb_black),
         }
     }
 

@@ -1,9 +1,12 @@
 import os
+import logging
 from flask import Flask, request, render_template, flash, session, redirect, abort, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from user import *
 from play import *
-from config import SECRET_KEY
+from config import SECRET_KEY, LOG_LEVEL
+
+logger = logging.getLogger('wordgame')
 
 app = Flask('WordGame')
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -63,7 +66,7 @@ def submit_word():
     word = request.args.get('word')
     if not word:
         abort(400)
-    return do_submit_word(session['user'], word)
+    return do_submit_guess(session['user'], word)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -164,4 +167,5 @@ def verify_email():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=LOG_LEVEL)
     app.run()
