@@ -295,12 +295,13 @@ def do_verify_updated_email(old_email, new_email, code):
 
 
 def send_email(subj, to_email, msg):
-    headers = f'Subject: {subj}\nFrom: {FROM_EMAIL}\n\n'
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        if SMTP_USE_TLS:
-            context = ssl.create_default_context()
-            server.starttls(context=context)
-        if SMTP_USERNAME and SMTP_PASSWORD:
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(FROM_EMAIL, to_email, headers + msg)
+    pass   # had to disable because of asshat hackers
+    # headers = f'Subject: {subj}\nFrom: {FROM_EMAIL}\n\n'
+    # with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+    #     if SMTP_USE_TLS:
+    #         context = ssl.create_default_context()
+    #         server.starttls(context=context)
+    #     if SMTP_USERNAME and SMTP_PASSWORD:
+    #         server.login(SMTP_USERNAME, SMTP_PASSWORD)
+    #     server.sendmail(FROM_EMAIL, to_email, headers + msg)
 

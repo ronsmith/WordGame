@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
     <h3 class="mb-4">Forgot Password</h3>
-    <form method="post">
-        <div class="mb-3">
-            <label for="email" class="form-label">Email address</label>
-            <input type="email" class="form-control" name="email">
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Send Reset Email</button>
-        <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Cancel</a>
-    </form>
+    <p>Please constact the administrator.</p>
+    <p>Too many asshat hackers keep using the automated reset</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Cancel</a>
+{#    <form method="post">#}
+{#        <div class="mb-3">#}
+{#            <label for="email" class="form-label">Email address</label>#}
+{#            <input type="email" class="form-control" name="email">#}
+{#        </div>#}
+{#        <button type="submit" class="btn btn-primary mt-3">Send Reset Email</button>#}
+{#        <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Cancel</a>#}
+{#    </form>#}
 {% endblock %}
